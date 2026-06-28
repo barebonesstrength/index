@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barebones — Training & Nutrition Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+/* === DESIGN TOKENS === */
+:root {
+  --green:#0a4834; --green-h:#0d5c42;
+  --cream:#ebe1cf; --off-white:#f0edee; --near-black:#010b13;
+  --bg:#f0edee; --surface:#fff; --tint:#f8f5f1;
+  --t1:#010b13; --t2:#4a5568; --t3:#8a9099;
+  --border:#ddd8d0; --border-s:#eae5df;
+  --r-sm:6px; --r-md:10px; --r-lg:16px; --r-xl:24px;
+  --sh-xs:0 1px 2px rgba(1,11,19,.05); --sh-sm:0 2px 6px rgba(1,11,19,.07); --sh-md:0 4px 16px rgba(1,11,19,.09);
+  --fh:'Inter',sans-serif; --fb:'Montserrat',sans-serif; --fm:'SF Mono','Fira Code',monospace;
+  --deficit:#b5863a; --recovery:#7c3aed; --surplus:#059669; --maintenance:#6b7280;
+  --ok-bg:#f0fdf8; --ok-b:#2d6a4f;
+  --warn-bg:#fffcf0; --warn-b:#b5863a;
+  --info-bg:#eef2ff; --info-b:#3730a3;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--fb);background:var(--bg);color:var(--t1);min-height:100vh;line-height:1.5}
+h1,h2,h3,h4,h5,h6{font-family:var(--fh);font-weight:700;line-height:1.2}
+input,select,textarea,button{font-family:var(--fb);font-size:14px}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--green)}
+
+/* === HEADER === */
+.app-header{background:var(--near-black);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:32px;height:32px;background:var(--green);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:16px;color:var(--cream);letter-spacing:-.02em;flex-shrink:0}
+.logo-name{font-family:var(--fh);font-weight:700;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--cream)}
+.logo-sub{font-size:11px;color:rgba(240,237,238,.45);letter-spacing:.04em}
+.btn-ghost{color:rgba(235,225,207,.75);font-size:13px;font-family:var(--fh);padding:6px 12px;border-radius:var(--r-sm);transition:all .15s}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:var(--cream)}
+
+/* === NAV === */
+.nav-tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{padding:12px 20px;font-size:13px;font-weight:500;color:var(--t2);border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;font-family:var(--fh)}
+.nav-tab:hover{color:var(--t1)}
+.nav-tab.active{color:var(--green);border-bottom-color:var(--green);font-weight:600}
+
+/* === LAYOUT === */
+.main{max-width:1100px;margin:0 auto;padding:24px 20px}
+.view{display:none}
+.view.active{display:block}
+
+/* === CARDS === */
+.card{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--r-lg);box-shadow:var(--sh-xs)}
+.card-body{padding:20px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:12px;font-family:var(--fh)}
+
+/* === METRIC CARDS === */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.metric-card{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--r-md);box-shadow:var(--sh-xs);padding:16px}
+.metric-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;font-family:var(--fh)}
+.metric-value{font-family:var(--fm);font-size:24px;font-weight:600;color:var(--t1);line-height:1}
+.metric-sub{font-size:12px;color:var(--t3);margin-top:6px}
+
+/* === THIS WEEK STRIP === */
+.week-strip{background:var(--green);border-radius:var(--r-md);padding:14px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:12px;margin-bottom:16px}
+.ws-val{font-family:var(--fm);font-size:18px;font-weight:600;color:var(--cream)}
+.ws-lbl{font-size:11px;color:rgba(235,225,207,.6);margin-top:3px;font-family:var(--fh);letter-spacing:.04em}
+
+/* === CALM === */
+.calm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.calm-step{background:var(--tint);border:1px solid var(--border-s);border-radius:var(--r-md);padding:12px 14px}
+.calm-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--deficit);margin-bottom:8px;font-family:var(--fh)}
+.calm-content{font-size:12px;color:var(--t2);line-height:1.8}
+.diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-bottom:14px}
+.diag-label{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--t2);cursor:pointer;line-height:1.45}
+.diag-label input{margin-top:2px;flex-shrink:0;accent-color:var(--green)}
+.verdict{border-radius:0 var(--r-md) var(--r-md) 0;padding:12px 16px;font-size:13px;line-height:1.65;border-left:3px solid transparent}
+
+/* === CHART CONTROLS === */
+.chart-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.rb{padding:5px 12px;font-size:11px;font-weight:600;border-radius:var(--r-sm);border:1px solid var(--border);color:var(--t2);background:var(--bg);font-family:var(--fh);transition:all .15s;letter-spacing:.04em}
+.rb.active{background:var(--green);border-color:var(--green);color:var(--cream)}
+.rb:hover:not(.active){border-color:var(--green);color:var(--green)}
+.pn{padding:5px 10px;font-size:14px;border-radius:var(--r-sm);border:1px solid var(--border);color:var(--t2);background:var(--bg);transition:all .15s;line-height:1}
+.pn:hover:not([disabled]){border-color:var(--green);color:var(--green)}
+.pn[disabled]{opacity:.3;cursor:default}
+.range-inp{width:44px;padding:4px 6px;font-size:11px;text-align:center;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--t1)}
+.range-inp:focus{outline:none;border-color:var(--green)}
+.date-inp{padding:4px 8px;font-size:11px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--t1);cursor:pointer}
+.date-inp:focus{outline:none;border-color:var(--green)}
+.range-label{font-size:11px;color:var(--t3);font-family:var(--fh);margin-left:auto}
+
+/* === OVERVIEW STRIP === */
+.strip-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;font-family:var(--fh)}
+.strip-bars{display:flex;gap:3px;align-items:flex-end;height:28px}
+.strip-bar{flex:1;border-radius:3px 3px 0 0;cursor:pointer;transition:all .2s;min-width:0}
+.strip-bar:hover{filter:brightness(1.15);transform:scaleY(1.1);transform-origin:bottom}
+
+/* === LEGEND === */
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);font-family:var(--fh)}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* === GRIDS === */
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.mb-16{margin-bottom:16px}
+
+/* === FORMS === */
+.page-title{font-size:22px;font-weight:700;margin-bottom:6px}
+.page-sub{font-size:14px;color:var(--t2);margin-bottom:24px}
+.section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin:16px 0 10px;font-family:var(--fh)}
+.field{margin-bottom:14px}
+.field-label{display:block;font-size:12px;font-weight:600;color:var(--t2);margin-bottom:5px;font-family:var(--fh)}
+.field-input{width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--t1);transition:border-color .15s}
+.field-input:focus{outline:none;border-color:var(--green);background:var(--surface)}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fr4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.divider{border:none;border-top:1px solid var(--border-s);margin:16px 0}
+.slider-row{margin-bottom:12px}
+.slider-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.slider-lbl{font-size:12px;font-weight:600;color:var(--t2);font-family:var(--fh)}
+.slider-val{font-family:var(--fm);font-weight:600;font-size:13px;color:var(--t1)}
+input[type="range"]{width:100%;accent-color:var(--green);height:4px}
+
+/* === BUTTONS === */
+.btn-primary{background:var(--green);color:var(--cream);padding:11px 20px;border-radius:var(--r-md);font-size:13px;font-weight:600;font-family:var(--fh);width:100%;transition:background .15s;letter-spacing:.02em}
+.btn-primary:hover{background:var(--green-h)}
+.btn-secondary{display:inline-flex;align-items:center;gap:6px;background:var(--cream);color:var(--near-black);padding:10px 16px;border-radius:var(--r-md);font-size:13px;font-weight:600;font-family:var(--fh);border:1px solid var(--border);transition:background .15s;cursor:pointer}
+.btn-secondary:hover{background:#dfd4b8}
+.btn-danger{display:inline-flex;align-items:center;gap:6px;background:#fee2e2;color:#991b1b;padding:10px 16px;border-radius:var(--r-md);font-size:13px;font-weight:600;font-family:var(--fh);border:1px solid #fca5a5;cursor:pointer}
+.btn-danger:hover{background:#fecaca}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.success-msg{font-size:12px;color:var(--ok-b);margin-top:8px;display:none;font-family:var(--fh)}
+
+/* === HISTORY === */
+.sub-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+.sub-tab{padding:8px 16px;font-size:12px;font-weight:600;color:var(--t2);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--fh);transition:all .15s;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none}
+.sub-tab.active{color:var(--green);border-bottom-color:var(--green)}
+.sub-tab:hover:not(.active){color:var(--t1)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--fh)}
+td{padding:9px 12px;border-bottom:1px solid var(--border-s);font-family:var(--fm);font-size:12px;white-space:nowrap}
+td.tc{font-family:var(--fb)}
+.trend-up{color:#991b1b;font-weight:700}
+.trend-dn{color:#2d6a4f;font-weight:700}
+.phase-pill{display:inline-block;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:600;font-family:var(--fh)}
+.type-pill{display:inline-block;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:600;font-family:var(--fh)}
+
+/* === SETTINGS === */
+.s-section{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--r-lg);box-shadow:var(--sh-xs);padding:20px;margin-bottom:16px}
+.s-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.s-desc{font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.55}
+
+/* === EMPTY STATE === */
+.empty{text-align:center;padding:64px 20px}
+.empty-mark{width:64px;height:64px;background:var(--green);border-radius:var(--r-lg);display:inline-flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:28px;color:var(--cream);margin-bottom:24px;letter-spacing:-.02em}
+.empty-title{font-size:24px;font-weight:700;margin-bottom:10px}
+.empty-desc{font-size:15px;color:var(--t2);margin-bottom:28px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.6}
+.empty-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.empty-actions .btn-primary{width:auto;padding:11px 24px}
+
+/* === TOAST === */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--near-black);color:var(--cream);padding:12px 20px;border-radius:var(--r-md);font-size:13px;font-family:var(--fh);box-shadow:var(--sh-md);z-index:1000;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* === RESPONSIVE === */
+@media(max-width:640px){
+  .chart-grid-2{grid-template-columns:1fr}
+  .calm-grid{grid-template-columns:1fr}
+  .diag-grid{grid-template-columns:1fr}
+  .metrics-grid{grid-template-columns:repeat(2,1fr)}
+  .fr4{grid-template-columns:1fr 1fr}
+  .fr3{grid-template-columns:1fr 1fr}
+  .main{padding:16px 14px}
+  .card-body{padding:16px}
+  .week-strip{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">
+    <div class="logo-mark">B</div>
+    <div>
+      <div class="logo-name">Barebones</div>
+      <div class="logo-sub">Training &amp; Nutrition Navigator</div>
+    </div>
+  </div>
+  <div>
+    <button class="btn-ghost" onclick="sv('settings')">
+      <i class="ti ti-settings" style="vertical-align:-2px;margin-right:4px;font-size:15px"></i>Settings
+    </button>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-v="dashboard" onclick="sv('dashboard')">Overview</button>
+  <button class="nav-tab" data-v="log" onclick="sv('log')">Log day</button>
+  <button class="nav-tab" data-v="week" onclick="sv('week')">Log week</button>
+  <button class="nav-tab" data-v="history" onclick="sv('history')">History</button>
+  <button class="nav-tab" data-v="settings" onclick="sv('settings')">Settings</button>
+</nav>
+
+<main class="main">
+
+<!-- ===== DASHBOARD ===== -->
+<div id="view-dashboard" class="view active">
+  <div id="empty-state" class="empty" style="display:none">
+    <div class="empty-mark">B</div>
+    <h2 class="empty-title">Welcome to Barebones Navigator</h2>
+    <p class="empty-desc">Track your training phases, daily nutrition, and biofeedback in one place. The CALM diagnostic framework helps you make better decisions at every step of the process.</p>
+    <div class="empty-actions">
+      <button class="btn-primary" onclick="loadSample()">Load sample data to explore</button>
+      <button class="btn-secondary" onclick="sv('week')">Start fresh →</button>
+    </div>
+  </div>
+
+  <div id="dash-content">
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-label">Current weight</div><div class="metric-value" id="mw">—</div><div class="metric-sub" id="mws">—</div></div>
+      <div class="metric-card"><div class="metric-label">Total lost</div><div class="metric-value" id="ml" style="color:var(--surplus)">—</div><div class="metric-sub" id="mls">—</div></div>
+      <div class="metric-card"><div class="metric-label">Avg weekly loss</div><div class="metric-value" id="ma">—</div><div class="metric-sub">per week</div></div>
+      <div class="metric-card"><div class="metric-label">Current phase</div><div class="metric-value" id="mp" style="font-size:16px;margin-top:4px">—</div><div class="metric-sub" id="mps" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div></div>
+    </div>
+
+    <div class="week-strip">
+      <div><div class="ws-val" id="tw-d">—</div><div class="ws-lbl">Days logged</div></div>
+      <div><div class="ws-val" id="tw-c">—</div><div class="ws-lbl">Avg calories</div></div>
+      <div><div class="ws-val" id="tw-w">—</div><div class="ws-lbl">Avg weight</div></div>
+      <div><div class="ws-val" id="tw-s">—</div><div class="ws-lbl">Avg steps</div></div>
+      <div><div class="ws-val" id="tw-e">—</div><div class="ws-lbl">Avg energy</div></div>
+      <div><div class="ws-val" id="tw-l">—</div><div class="ws-lbl">Avg sleep</div></div>
+    </div>
+
+    <!-- CALM -->
+    <div class="card mb-16">
+      <div class="card-body">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);font-family:var(--fh)">CALM Diagnostic</span>
+          <span style="font-size:13px;color:var(--t2);font-family:var(--fh)" id="calm-hl">—</span>
+        </div>
+        <div class="calm-grid">
+          <div class="calm-step"><div class="calm-label">C — Collect data</div><div class="calm-content" id="calm-c">—</div></div>
+          <div class="calm-step"><div class="calm-label">A — Assess trend</div><div class="calm-content" id="calm-a">—</div></div>
+        </div>
+        <div class="calm-label" style="margin-bottom:10px">L — Look for leaks</div>
+        <div class="diag-grid">
+          <label class="diag-label"><input type="checkbox" class="diag" onchange="uvd()"> Every meal tracked — no eyeballing this week</label>
+          <label class="diag-label"><input type="checkbox" class="diag" onchange="uvd()"> Steps consistent with the previous two weeks</label>
+          <label class="diag-label"><input type="checkbox" class="diag" onchange="uvd()"> Portions weighed — not estimated from memory</label>
+          <label class="diag-label"><input type="checkbox" class="diag" onchange="uvd()"> Sleep and stress levels have been stable</label>
+        </div>
+        <div class="calm-label" style="margin-bottom:8px">M — Modify</div>
+        <div class="verdict" id="verdict">—</div>
+      </div>
+    </div>
+
+    <!-- Weight chart -->
+    <div class="card mb-16">
+      <div class="card-body">
+        <div class="chart-controls">
+          <button class="pn" onclick="pan(-1)" id="pan-l" disabled>←</button>
+          <button class="rb active" onclick="setZoom(null)" id="rb-all">All</button>
+          <button class="rb" onclick="setZoom(4)" id="rb-4">4W</button>
+          <button class="rb" onclick="setZoom(8)" id="rb-8">8W</button>
+          <input type="number" class="range-inp" id="from-wk" placeholder="Wk" min="1" onblur="applyRange()" onkeydown="if(event.key==='Enter')applyRange()">
+          <span style="font-size:11px;color:var(--t3)">–</span>
+          <input type="number" class="range-inp" id="to-wk" placeholder="Wk" min="1" onblur="applyRange()" onkeydown="if(event.key==='Enter')applyRange()">
+          <button class="pn" onclick="pan(1)" id="pan-r" disabled>→</button>
+          <span class="range-label" id="rl">—</span>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="font-size:11px;color:var(--t3);font-family:var(--fh)">Start</span>
+            <input type="date" class="date-inp" id="start-date" onchange="setStartDate(this.value)" title="Set protocol start date — chart labels switch to real dates">
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="ch-wt" role="img" aria-label="Weekly body weight trend">Weekly body weight trend</canvas></div>
+        <div style="margin-top:12px">
+          <div class="strip-label">Full timeline — click any week to zoom in</div>
+          <div class="strip-bars" id="strip"></div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">Daily calories — current view</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <span class="legend-item"><span class="legend-dot" style="background:var(--deficit)"></span>Training day</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span>Rest day</span>
+            <span class="legend-item"><span style="border-top:1.5px dashed #991b1b;width:14px;display:inline-block;vertical-align:middle"></span><span style="margin-left:4px">Target</span></span>
+          </div>
+          <div style="position:relative;height:150px"><canvas id="ch-dc" role="img" aria-label="Daily calorie intake">Daily calories</canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">Biofeedback — current view (1–10)</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <span class="legend-item" style="color:var(--surplus)"><span class="legend-dot" style="background:var(--surplus)"></span>Energy</span>
+            <span class="legend-item" style="color:var(--deficit)"><span class="legend-dot" style="background:var(--deficit)"></span>Hunger</span>
+            <span class="legend-item" style="color:#991b1b"><span class="legend-dot" style="background:#991b1b"></span>Stress</span>
+          </div>
+          <div style="position:relative;height:150px"><canvas id="ch-bf" role="img" aria-label="Biofeedback trends">Biofeedback</canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid-2">
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">Avg calories / week</div>
+          <div style="position:relative;height:130px"><canvas id="ch-wc" role="img" aria-label="Weekly avg calories">Weekly avg calories</canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <div class="card-title">Cardio volume (min/week)</div>
+          <div style="position:relative;height:130px"><canvas id="ch-cd" role="img" aria-label="Weekly cardio volume">Cardio per week</canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOG DAY ===== -->
+<div id="view-log" class="view">
+  <h1 class="page-title">Log today</h1>
+  <p class="page-sub">Week <span id="log-wkn" style="font-weight:700;color:var(--green)">—</span></p>
+  <div class="card">
+    <div class="card-body" style="max-width:540px">
+      <div class="fr2">
+        <div class="field"><label class="field-label">Date / label</label><input class="field-input" type="text" id="f-dt" placeholder="e.g. 17 Mar"></div>
+        <div class="field"><label class="field-label">Day type</label><select class="field-input" id="f-tp"><option value="T">Training day</option><option value="R">Rest day</option></select></div>
+      </div>
+      <div class="fr2">
+        <div class="field"><label class="field-label">Body weight (kg)</label><input class="field-input" type="number" step="0.1" id="f-wt" placeholder="83.0"></div>
+        <div class="field"><label class="field-label">Total calories</label><input class="field-input" type="number" id="f-kc" placeholder="2325"></div>
+      </div>
+      <div class="fr4">
+        <div class="field"><label class="field-label">Protein (g)</label><input class="field-input" type="number" id="f-pr" placeholder="200"></div>
+        <div class="field"><label class="field-label">Carbs (g)</label><input class="field-input" type="number" id="f-cb" placeholder="280"></div>
+        <div class="field"><label class="field-label">Fat (g)</label><input class="field-input" type="number" id="f-ft" placeholder="45"></div>
+        <div class="field"><label class="field-label">Fiber (g)</label><input class="field-input" type="number" id="f-fi" placeholder="35"></div>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Lifestyle</div>
+      <div class="fr3">
+        <div class="field"><label class="field-label">Sleep (hrs)</label><input class="field-input" type="number" step="0.5" id="f-sl" placeholder="7.5"></div>
+        <div class="field"><label class="field-label">Steps</label><input class="field-input" type="number" id="f-st" placeholder="10000"></div>
+        <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="f-wk" placeholder="1"></div>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Biofeedback — 1 (very low) to 10 (very high)</div>
+      <div class="slider-row"><div class="slider-hd"><span class="slider-lbl">Energy</span><span class="slider-val" id="sv-e">7</span></div><input type="range" min="1" max="10" value="7" id="f-eg" oninput="document.getElementById('sv-e').textContent=this.value"></div>
+      <div class="slider-row"><div class="slider-hd"><span class="slider-lbl">Hunger</span><span class="slider-val" id="sv-h">5</span></div><input type="range" min="1" max="10" value="5" id="f-hu" oninput="document.getElementById('sv-h').textContent=this.value"></div>
+      <div class="slider-row" style="margin-bottom:16px"><div class="slider-hd"><span class="slider-lbl">Stress</span><span class="slider-val" id="sv-s">5</span></div><input type="range" min="1" max="10" value="5" id="f-sr" oninput="document.getElementById('sv-s').textContent=this.value"></div>
+      <div class="field"><label class="field-label">Notes</label><input class="field-input" type="text" id="f-nt" placeholder="Anything notable today..."></div>
+      <button class="btn-primary" onclick="addDay()">Add day <i class="ti ti-plus"></i></button>
+      <div class="success-msg" id="day-ok"><i class="ti ti-check"></i> Day logged.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOG WEEK ===== -->
+<div id="view-week" class="view">
+  <h1 class="page-title">Log week</h1>
+  <p class="page-sub">Set the phase and daily calorie targets for a week.</p>
+  <div class="card">
+    <div class="card-body" style="max-width:540px">
+      <div class="fr2">
+        <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="w-n" placeholder="1"></div>
+        <div class="field"><label class="field-label">Phase</label><select class="field-input" id="w-ph"><option>Deficit</option><option>Recovery</option><option>Surplus</option><option>Maintenance</option></select></div>
+      </div>
+      <div class="field"><label class="field-label">Phase goal</label><input class="field-input" type="text" id="w-gl" placeholder="What is the primary goal this week?"></div>
+      <hr class="divider">
+      <div class="section-title">Daily calorie targets</div>
+      <div class="fr4">
+        <div class="field"><label class="field-label">Training cals</label><input class="field-input" type="number" id="w-tc" placeholder="2325"></div>
+        <div class="field"><label class="field-label">Rest cals</label><input class="field-input" type="number" id="w-rc" placeholder="1915"></div>
+        <div class="field"><label class="field-label">Cardio (min)</label><input class="field-input" type="number" id="w-cd" placeholder="60"></div>
+        <div class="field"><label class="field-label">Zone</label><select class="field-input" id="w-cz"><option>Zone 1</option><option selected>Zone 2</option><option>Zone 3</option><option>Zone 4</option><option>Mixed</option></select></div>
+      </div>
+      <button class="btn-primary" onclick="addWeek()">Save week <i class="ti ti-check"></i></button>
+      <div class="success-msg" id="week-ok"><i class="ti ti-check"></i> Week saved.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div id="view-history" class="view">
+  <h1 class="page-title" style="margin-bottom:16px">History</h1>
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="htab('d')" id="ht-d">Daily</button>
+    <button class="sub-tab" onclick="htab('w')" id="ht-w">Weekly</button>
+  </div>
+  <div class="card">
+    <div id="h-daily" class="table-wrap">
+      <table><thead><tr><th>Date</th><th>Wk</th><th>Type</th><th>Weight</th><th>Cals</th><th>Pro</th><th>Carbs</th><th>Fat</th><th>Sleep</th><th>Steps</th><th>Energy</th><th>Hunger</th><th>Stress</th><th>Notes</th></tr></thead><tbody id="hd-body"></tbody></table>
+    </div>
+    <div id="h-weekly" class="table-wrap" style="display:none">
+      <table><thead><tr><th>Wk</th><th>Date</th><th>Phase</th><th>Avg wt</th><th>Change</th><th>Avg cals</th><th>Avg steps</th><th>Avg sleep</th><th>Energy</th><th>Stress</th><th>Days</th></tr></thead><tbody id="hw-body"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="view-settings" class="view">
+  <h1 class="page-title">Settings</h1>
+  <p class="page-sub">Configure your protocol and manage your data.</p>
+
+  <div class="s-section">
+    <div class="s-title">Protocol start date</div>
+    <div class="s-desc">Set this to the first day of your current protocol. All chart labels switch from "W1, W2..." to real calendar dates like "6 Jan", "13 Jan".</div>
+    <div class="field" style="max-width:200px"><label class="field-label">Start date</label><input type="date" class="field-input" id="cfg-date" onchange="setStartDate(this.value)"></div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-title">Export &amp; Import</div>
+    <div class="s-desc">Export a JSON backup of all your data. Import a previous export to restore your history on a new device or browser. Your data saves automatically in this browser.</div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="exportData()"><i class="ti ti-download"></i>Export to JSON</button>
+      <label class="btn-secondary" style="cursor:pointer"><i class="ti ti-upload"></i>Import from JSON<input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none"></label>
+    </div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-title">Sample data</div>
+    <div class="s-desc">Load a 12-week cut phase example to explore all features with realistic data. This will replace any existing data.</div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="loadSample()"><i class="ti ti-sparkles"></i>Load 12-week sample</button>
+    </div>
+  </div>
+
+  <div class="s-section" style="border-color:#fca5a5">
+    <div class="s-title" style="color:#991b1b">Clear all data</div>
+    <div class="s-desc">Permanently delete all weeks and daily logs from this browser. Export first if you want a backup — this cannot be undone.</div>
+    <div class="btn-row">
+      <button class="btn-danger" onclick="clearAll()"><i class="ti ti-trash"></i>Clear all data</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ==============================
+   DATA & STATE
+============================== */
+let WEEKS = [];
+let DAILY = [];
+let CFG = { startDate: null, zoom: null, offset: 0, fromWk: null, toWk: null };
+let CH = {};
+
+const PC = { Deficit:'#b5863a', Recovery:'#7c3aed', Surplus:'#059669', Maintenance:'#6b7280' };
+
+const SAMPLE_W = [
+  {wk:1,ph:'Deficit',gl:'Establish deficit, build tracking habits',avgWt:96.0,ch:0,tCal:2565,rCal:2020,cardio:0},
+  {wk:2,ph:'Deficit',gl:'Fat loss phase — increase NEAT',avgWt:95.0,ch:-1.0,tCal:2565,rCal:2020,cardio:0},
+  {wk:3,ph:'Deficit',gl:'Fat loss phase',avgWt:94.1,ch:-0.9,tCal:2565,rCal:2020,cardio:0},
+  {wk:4,ph:'Deficit',gl:'Fat loss phase',avgWt:93.65,ch:-0.45,tCal:2565,rCal:2020,cardio:0},
+  {wk:5,ph:'Deficit',gl:'Fat loss phase',avgWt:93.4,ch:-0.25,tCal:2565,rCal:2020,cardio:0},
+  {wk:6,ph:'Deficit',gl:'Fat loss phase',avgWt:93.0,ch:-0.4,tCal:2565,rCal:2020,cardio:0},
+  {wk:7,ph:'Deficit',gl:'Fat loss phase',avgWt:92.35,ch:-0.65,tCal:2565,rCal:2020,cardio:0},
+  {wk:8,ph:'Deficit',gl:'Fat loss phase',avgWt:92.34,ch:-0.01,tCal:2565,rCal:2020,cardio:0},
+  {wk:9,ph:'Deficit',gl:'Fat loss phase',avgWt:92.17,ch:-0.17,tCal:2565,rCal:2020,cardio:0},
+  {wk:10,ph:'Deficit',gl:'Calorie adjustment — progress slowing',avgWt:91.41,ch:-0.76,tCal:2365,rCal:1915,cardio:0},
+  {wk:11,ph:'Deficit',gl:'Final 4 weeks — maintain structure',avgWt:90.54,ch:-0.87,tCal:2365,rCal:1915,cardio:60},
+  {wk:12,ph:'Deficit',gl:'Final 4 weeks — maintain structure',avgWt:90.75,ch:0.21,tCal:2325,rCal:1915,cardio:60},
+];
+
+const SAMPLE_D = [
+  {id:1,dt:'Mar 3',wk:11,type:'T',wt:90.8,kcal:2355,pro:201,cb:270,fat:46,fib:35,slp:7.5,stp:10200,egy:7,hun:6,str:5,nt:''},
+  {id:2,dt:'Mar 4',wk:11,type:'T',wt:90.5,kcal:2370,pro:199,cb:272,fat:47,fib:36,slp:7.0,stp:9800,egy:6,hun:6,str:6,nt:''},
+  {id:3,dt:'Mar 5',wk:11,type:'R',wt:90.3,kcal:1920,pro:218,cb:134,fat:56,fib:34,slp:8.0,stp:8200,egy:7,hun:7,str:4,nt:''},
+  {id:4,dt:'Mar 6',wk:11,type:'T',wt:90.1,kcal:2360,pro:200,cb:268,fat:45,fib:35,slp:7.5,stp:10500,egy:8,hun:5,str:4,nt:''},
+  {id:5,dt:'Mar 7',wk:11,type:'T',wt:90.6,kcal:2345,pro:201,cb:267,fat:46,fib:35,slp:6.5,stp:9500,egy:6,hun:7,str:7,nt:'Tired'},
+  {id:6,dt:'Mar 8',wk:11,type:'T',wt:90.4,kcal:2375,pro:200,cb:272,fat:46,fib:36,slp:8.5,stp:11000,egy:8,hun:5,str:3,nt:''},
+  {id:7,dt:'Mar 9',wk:11,type:'R',wt:90.6,kcal:1930,pro:220,cb:137,fat:55,fib:34,slp:7.0,stp:7500,egy:7,hun:7,str:5,nt:''},
+  {id:8,dt:'Mar 10',wk:12,type:'T',wt:90.9,kcal:2330,pro:199,cb:278,fat:47,fib:35,slp:7.0,stp:9600,egy:6,hun:7,str:6,nt:'Hungry today'},
+  {id:9,dt:'Mar 11',wk:12,type:'T',wt:91.0,kcal:2345,pro:200,cb:280,fat:46,fib:35,slp:7.5,stp:10000,egy:6,hun:6,str:5,nt:''},
+  {id:10,dt:'Mar 12',wk:12,type:'R',wt:90.8,kcal:1980,pro:206,cb:158,fat:58,fib:34,slp:8.0,stp:8800,egy:7,hun:7,str:4,nt:''},
+  {id:11,dt:'Mar 13',wk:12,type:'T',wt:90.5,kcal:2340,pro:200,cb:278,fat:46,fib:35,slp:7.5,stp:10200,egy:7,hun:6,str:5,nt:''},
+  {id:12,dt:'Mar 14',wk:12,type:'T',wt:91.2,kcal:2370,pro:201,cb:282,fat:44,fib:34,slp:6.0,stp:9200,egy:5,hun:8,str:8,nt:'Work stress'},
+  {id:13,dt:'Mar 15',wk:12,type:'T',wt:90.6,kcal:2360,pro:200,cb:279,fat:46,fib:36,slp:9.0,stp:10800,egy:8,hun:5,str:3,nt:''},
+  {id:14,dt:'Mar 16',wk:12,type:'R',wt:90.7,kcal:1960,pro:212,cb:150,fat:57,fib:34,slp:7.5,stp:7200,egy:7,hun:6,str:4,nt:''},
+];
+
+/* ==============================
+   STORAGE
+============================== */
+function save() {
+  try {
+    localStorage.setItem('bb_w', JSON.stringify(WEEKS));
+    localStorage.setItem('bb_d', JSON.stringify(DAILY));
+    localStorage.setItem('bb_c', JSON.stringify(CFG));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const w = localStorage.getItem('bb_w');
+    const d = localStorage.getItem('bb_d');
+    const c = localStorage.getItem('bb_c');
+    if (w) WEEKS = JSON.parse(w);
+    if (d) DAILY = JSON.parse(d);
+    if (c) Object.assign(CFG, JSON.parse(c));
+    if (CFG.startDate) {
+      document.getElementById('start-date').value = CFG.startDate;
+      document.getElementById('cfg-date').value = CFG.startDate;
+    }
+  } catch(e) {}
+}
+
+/* ==============================
+   HELPERS
+============================== */
+const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+function wkLabel(wk) {
+  if (!CFG.startDate) return 'W' + wk;
+  const d = new Date(CFG.startDate + 'T00:00:00');
+  d.setDate(d.getDate() + (wk - 1) * 7);
+  return d.getDate() + ' ' + d.toLocaleString('en-AU', { month:'short' });
+}
+
+function wkStats(wk) {
+  const d = DAILY.filter(x => x.wk === wk);
+  const lg = d.filter(x => x.kcal > 0);
+  if (!d.length) return null;
+  const v = fn => d.filter(x => fn(x) > 0).map(fn);
+  return {
+    avgWt: avg(v(x=>x.wt)), avgCal: lg.length ? avg(lg.map(x=>x.kcal)) : 0,
+    avgStp: avg(v(x=>x.stp)), avgSlp: avg(v(x=>x.slp)),
+    avgEgy: avg(v(x=>x.egy)), avgHun: avg(v(x=>x.hun)), avgStr: avg(v(x=>x.str)),
+    daysLogged: lg.length, total: d.length, highStr: d.filter(x=>x.str>=8).length,
+  };
+}
+
+function visWks() {
+  if (!WEEKS.length) return [];
+  if (CFG.zoom === 'range') return WEEKS.filter(w => w.wk >= CFG.fromWk && w.wk <= CFG.toWk);
+  if (!CFG.zoom) return [...WEEKS];
+  const n = CFG.zoom, off = CFG.offset || 0;
+  const ei = Math.min(WEEKS.length - 1, WEEKS.length - 1 + off);
+  const si = Math.max(0, ei - n + 1);
+  return WEEKS.slice(si, ei + 1);
+}
+
+function visDaily() {
+  const vn = visWks().map(w => w.wk);
+  const f = DAILY.filter(d => vn.includes(d.wk));
+  return f.length ? f : DAILY.slice(-14);
+}
+
+function showEmpty() {
+  const empty = !WEEKS.length && !DAILY.length;
+  document.getElementById('empty-state').style.display = empty ? 'block' : 'none';
+  document.getElementById('dash-content').style.display = empty ? 'none' : 'block';
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+/* ==============================
+   NAVIGATION
+============================== */
+function sv(id) {
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('active', b.dataset.v === id));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (id === 'history') renderHistory();
+  if (id === 'log') {
+    const mx = DAILY.length ? Math.max(...DAILY.map(d=>d.wk)) : 1;
+    document.getElementById('log-wkn').textContent = mx;
+    document.getElementById('f-wk').value = mx;
+  }
+}
+
+/* ==============================
+   METRICS
+============================== */
+function updateMetrics() {
+  if (!WEEKS.length) return;
+  // Compute avgWt from daily data where available
+  WEEKS.forEach(w => { const s = wkStats(w.wk); if (s && s.avgWt > 0) w.avgWt = +s.avgWt.toFixed(2); });
+
+  const latD = DAILY.filter(d=>d.wt).slice(-1)[0];
+  const curWt = latD ? latD.wt : WEEKS[WEEKS.length-1].avgWt;
+  const startWt = WEEKS[0].avgWt;
+  const nwk = WEEKS.length;
+  const tl = (startWt - curWt).toFixed(1);
+  document.getElementById('mw').textContent = curWt.toFixed(1) + ' kg';
+  document.getElementById('mws').textContent = 'Started at ' + startWt + ' kg';
+  document.getElementById('ml').textContent = tl + ' kg';
+  document.getElementById('mls').textContent = 'Over ' + nwk + ' weeks';
+  document.getElementById('ma').textContent = ((startWt - curWt) / nwk).toFixed(2) + ' kg';
+  const lw = WEEKS[WEEKS.length-1];
+  const pe = document.getElementById('mp');
+  pe.textContent = lw.ph; pe.style.color = PC[lw.ph] || 'var(--t1)';
+  const gl = lw.gl || '';
+  document.getElementById('mps').textContent = gl.length > 40 ? gl.slice(0,40)+'…' : gl;
+
+  // This week strip
+  const mx = DAILY.length ? Math.max(...DAILY.map(d=>d.wk)) : 0;
+  const ws = mx ? wkStats(mx) : null;
+  if (ws) {
+    document.getElementById('tw-d').textContent = ws.daysLogged+'/'+ws.total;
+    document.getElementById('tw-c').textContent = ws.avgCal ? Math.round(ws.avgCal).toLocaleString() : '—';
+    document.getElementById('tw-w').textContent = ws.avgWt ? ws.avgWt.toFixed(1)+' kg' : '—';
+    document.getElementById('tw-s').textContent = ws.avgStp ? Math.round(ws.avgStp).toLocaleString() : '—';
+    document.getElementById('tw-e').textContent = ws.avgEgy ? ws.avgEgy.toFixed(1)+'/10' : '—';
+    document.getElementById('tw-l').textContent = ws.avgSlp ? ws.avgSlp.toFixed(1)+' hrs' : '—';
+  }
+}
+
+/* ==============================
+   CALM
+============================== */
+function updateCALM() {
+  const wks = [...new Set(DAILY.map(d=>d.wk))].sort((a,b)=>a-b);
+  if (!wks.length) { document.getElementById('calm-hl').textContent='Log daily data to enable diagnostic'; return; }
+  const s1 = wkStats(wks[wks.length-2]);
+  const s2 = wks.length > 1 ? wkStats(wks[wks.length-1]) : null;
+  if (!s1) return;
+  const wt2 = s2 ? s1.avgWt.toFixed(1)+' → '+s2.avgWt.toFixed(1)+' kg' : s1.avgWt.toFixed(1)+' kg';
+  const asStp = s2 ? avg([s1.avgStp,s2.avgStp]) : s1.avgStp;
+  const asCal = s2 ? avg([s1.avgCal,s2.avgCal]) : s1.avgCal;
+  document.getElementById('calm-c').innerHTML =
+    `Weight: <strong style="color:var(--t1);font-family:var(--fm)">${wt2}</strong><br>`+
+    `Steps avg: <strong style="color:var(--t1);font-family:var(--fm)">${Math.round(asStp).toLocaleString()}/wk</strong><br>`+
+    `Cal avg: <strong style="color:var(--t1);font-family:var(--fm)">${Math.round(asCal).toLocaleString()} kcal</strong>`;
+  const diff = s2 ? s2.avgWt - s1.avgWt : 0;
+  const up = s2 && diff > 0.1, flat = s2 && Math.abs(diff) <= 0.1;
+  const tc = up?'#991b1b':flat?'#b5863a':'#2d6a4f';
+  const tl = up?'↑ Trending up':flat?'→ Plateau candidate':'↓ Trending down';
+  const sn = up?`<span style="color:#991b1b;font-weight:600">Up in a deficit — investigate</span>`:
+    flat?`<span style="color:#b5863a;font-weight:600">Plateau candidate</span>`:
+    `<span style="color:#2d6a4f;font-weight:600">Progress visible</span>`;
+  document.getElementById('calm-a').innerHTML =
+    `<strong style="color:${tc}">${tl}</strong><br>`+
+    `Wk change: <strong style="color:var(--t1);font-family:var(--fm)">${diff>=0?'+':''}${diff.toFixed(2)} kg</strong><br>${sn}`;
+  document.getElementById('calm-hl').textContent = !s2 ? 'Log 2+ weeks to enable full diagnostic' :
+    up ? 'Weight moving up — run diagnostic below' :
+    flat ? 'Plateau candidate — answer diagnostic below' :
+    'Progress visible — monitor weekly';
+  uvd();
+}
+
+function uvd() {
+  const wks = [...new Set(DAILY.map(d=>d.wk))].sort((a,b)=>a-b);
+  const el = document.getElementById('verdict');
+  if (wks.length < 2) {
+    el.textContent = 'Hold — log at least 2 weeks of daily data before running the full diagnostic. One data point shows a number, not a trend.';
+    el.style.background = 'var(--tint)'; el.style.borderLeftColor = 'var(--border)'; return;
+  }
+  const s1 = wkStats(wks[wks.length-2]), s2 = wkStats(wks[wks.length-1]);
+  const lw = WEEKS[WEEKS.length-1];
+  const diff = s2.avgWt - s1.avgWt;
+  const up = diff > 0.1, flat = Math.abs(diff) <= 0.1;
+  const stDrop = s2.avgStp < s1.avgStp - 1500;
+  const nChk = [...document.querySelectorAll('.diag')].filter(c=>c.checked).length;
+  const allOk = nChk === 4;
+  let text, bg, bc;
+  if (['Recovery','Maintenance'].includes(lw.ph)) {
+    text = lw.ph === 'Recovery'
+      ? 'Hold — recovery phase active. Lower volume and higher calories this week are intentional. This protects your metabolism and sets up the next deficit block to actually work.'
+      : 'Hold — maintenance phase. A small upward weight trend right now is expected and intentional. The goal is recovering metabolic rate, not losing weight.';
+    bg='var(--ok-bg)'; bc='var(--ok-b)';
+  } else if (!up && !flat) {
+    text = 'Hold — weight is trending down. No changes needed. Two consecutive flat weeks must be confirmed before acting on any variable.';
+    bg='var(--ok-bg)'; bc='var(--ok-b)';
+  } else if (up && s2.highStr > 0) {
+    text = 'Hold — weight is up and there was a high-stress day (8+/10) logged this week. Elevated cortisol causes the body to retain fluid, masking fat loss on the scale without fat loss having stopped. Address the stress source before touching food.';
+    bg='var(--warn-bg)'; bc='var(--warn-b)';
+  } else if (stDrop) {
+    text = `Hold — steps dropped by approximately ${Math.round(s1.avgStp-s2.avgStp).toLocaleString()}/week. Bring activity back to the previous level before touching calories — that step reduction is likely closing your deficit.`;
+    bg='var(--warn-bg)'; bc='var(--warn-b)';
+  } else if (!allOk) {
+    const rem = 4-nChk;
+    text = `Hold — ${rem} diagnostic question${rem!==1?'s':''} still unanswered. ${up?'When weight trends up in a deficit, tracking accuracy is almost always the culprit.':'Confirm execution is airtight before changing any variable.'} Rule out the obvious inputs before blaming the plan.`;
+    bg='var(--warn-bg)'; bc='var(--warn-b)';
+  } else {
+    text = flat
+      ? 'Adjust — two consecutive flat weeks confirmed, execution high across all four markers. Choose one change: reduce calories by 100–150 kcal/day, or increase daily steps by 1,000–2,000. Not both. Document it, hold for a minimum of 10 days, then re-evaluate.'
+      : 'Adjust — execution is confirmed high but weight has moved up. Add 1,000–2,000 steps per day as the first lever. One variable. Ten days. Then re-evaluate with fresh data.';
+    bg='var(--info-bg)'; bc='var(--info-b)';
+  }
+  el.textContent = text; el.style.background = bg; el.style.borderLeftColor = bc;
+}
+
+/* ==============================
+   ZOOM
+============================== */
+function updateZoomUI() {
+  document.getElementById('rb-all').classList.toggle('active', !CFG.zoom);
+  document.getElementById('rb-4').classList.toggle('active', CFG.zoom === 4);
+  document.getElementById('rb-8').classList.toggle('active', CFG.zoom === 8);
+  const vw = visWks();
+  const canL = CFG.zoom && CFG.zoom!=='range' && (CFG.offset||0)>-(WEEKS.length-CFG.zoom);
+  const canR = CFG.zoom && CFG.zoom!=='range' && (CFG.offset||0)<0;
+  document.getElementById('pan-l').disabled = !canL;
+  document.getElementById('pan-r').disabled = !canR;
+  if (vw.length) {
+    const f = vw[0], l = vw[vw.length-1];
+    document.getElementById('rl').textContent = wkLabel(f.wk)+' – '+wkLabel(l.wk)+' · '+vw.length+'wk';
+  }
+}
+
+function setZoom(n) {
+  CFG.zoom=n; CFG.offset=0; CFG.fromWk=null; CFG.toWk=null;
+  if (!n) { document.getElementById('from-wk').value=''; document.getElementById('to-wk').value=''; }
+  save(); renderCharts();
+}
+
+function pan(dir) {
+  if (!CFG.zoom || CFG.zoom==='range') return;
+  const no = (CFG.offset||0)+dir;
+  const mn = -(WEEKS.length-CFG.zoom);
+  CFG.offset = Math.max(mn, Math.min(0, no));
+  save(); renderCharts();
+}
+
+function applyRange() {
+  const f = parseInt(document.getElementById('from-wk').value);
+  const t = parseInt(document.getElementById('to-wk').value);
+  if (f && t && t>=f && f>=1) {
+    CFG.fromWk=f; CFG.toWk=t; CFG.zoom='range'; CFG.offset=0;
+    ['rb-all','rb-4','rb-8'].forEach(id => document.getElementById(id).classList.remove('active'));
+    save(); renderCharts();
+  }
+}
+
+function jumpTo(wk) {
+  const n = Math.min(4, WEEKS.length);
+  const aw = WEEKS.map(w=>w.wk);
+  const lw = Math.min(aw[aw.length-1], wk+1);
+  CFG.fromWk=Math.max(aw[0],lw-n+1); CFG.toWk=lw;
+  CFG.zoom='range'; CFG.offset=0;
+  document.getElementById('from-wk').value=CFG.fromWk;
+  document.getElementById('to-wk').value=CFG.toWk;
+  ['rb-all','rb-4','rb-8'].forEach(id => document.getElementById(id).classList.remove('active'));
+  save(); renderCharts();
+}
+
+function setStartDate(val) {
+  CFG.startDate = val || null;
+  document.getElementById('start-date').value = val || '';
+  document.getElementById('cfg-date').value = val || '';
+  save(); renderCharts();
+}
+
+/* ==============================
+   STRIP & LEGEND
+============================== */
+function renderStrip() {
+  const strip = document.getElementById('strip');
+  if (!strip || !WEEKS.length) return;
+  const vis = new Set(visWks().map(w=>w.wk));
+  const wts = WEEKS.map(w=>w.avgWt).filter(v=>v>0);
+  const maxW=Math.max(...wts), minW=Math.min(...wts), r=maxW-minW||1;
+  strip.innerHTML = WEEKS.map(w => {
+    const active = vis.has(w.wk);
+    const h = w.avgWt > 0 ? Math.round(5+20*(1-(w.avgWt-minW)/r)) : 12;
+    const col = PC[w.ph] || '#888';
+    return `<div class="strip-bar" title="${wkLabel(w.wk)}: ${w.avgWt||'?'}kg · ${w.ph}" onclick="jumpTo(${w.wk})" style="height:${h}px;background:${active?col:col+'50'}"></div>`;
+  }).join('');
+}
+
+function renderLegend() {
+  document.getElementById('legend').innerHTML = Object.entries(PC).map(([p,c]) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${c}"></span>${p}</span>`
+  ).join('');
+}
+
+/* ==============================
+   CHARTS
+============================== */
+function renderCharts() {
+  if (!WEEKS.length) { showEmpty(); return; }
+  showEmpty();
+  Object.values(CH).forEach(c => { try { c.destroy(); } catch(e) {} });
+  CH = {};
+  updateZoomUI(); renderStrip(); updateMetrics(); updateCALM();
+
+  const vw = visWks(), vd = visDaily();
+  const gc = 'rgba(1,11,19,0.06)', tc = 'rgba(1,11,19,0.38)';
+  const tip = {
+    backgroundColor:'#fff', titleColor:'#010b13', bodyColor:'#4a5568',
+    borderColor:'#ddd8d0', borderWidth:1, padding:10, cornerRadius:8,
+    titleFont:{size:12,family:"'Inter',sans-serif",weight:'600'},
+    bodyFont:{size:12,family:"'Montserrat',sans-serif"},
+  };
+  const xs = { grid:{color:gc,drawBorder:false}, ticks:{color:tc,font:{size:10,family:"'Montserrat',sans-serif"},maxRotation:CFG.startDate?42:0}, border:{display:false} };
+  const ys = { grid:{color:gc,drawBorder:false}, ticks:{color:tc,font:{size:10,family:"'Montserrat',sans-serif"}}, border:{display:false} };
+  const nl = { display:false };
+  const base = { responsive:true, maintainAspectRatio:false, animation:{duration:350} };
+
+  CH.w = new Chart(document.getElementById('ch-wt'), {
+    type:'line',
+    data:{ labels:vw.map(d=>wkLabel(d.wk)), datasets:[{
+      label:'Weight (kg)', data:vw.map(d=>d.avgWt>0?d.avgWt:null),
+      borderColor:'#0a4834', borderWidth:2.5,
+      pointBackgroundColor:vw.map(d=>PC[d.ph]),
+      pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, pointBorderWidth:2,
+      tension:.3, fill:false, spanGaps:true,
+    }]},
+    options:{...base, plugins:{legend:nl,tooltip:{...tip,callbacks:{label:ctx=>ctx.raw?.toFixed(1)+' kg',afterLabel:ctx=>'Phase: '+vw[ctx.dataIndex]?.ph}}}, scales:{x:xs,y:{...ys,ticks:{...ys.ticks,callback:v=>v+' kg'}}}},
+  });
+
+  CH.dc = new Chart(document.getElementById('ch-dc'), {
+    type:'bar',
+    data:{ labels:vd.map(d=>d.dt), datasets:[
+      {type:'bar',label:'Calories',data:vd.map(d=>d.kcal),backgroundColor:vd.map(d=>d.type==='T'?'#b5863a99':'#9ca3af66'),borderColor:vd.map(d=>d.type==='T'?'#b5863a':'#9ca3af'),borderWidth:1.5,borderRadius:3},
+      {type:'line',label:'Target',data:vd.map(d=>{const w=WEEKS.find(x=>x.wk===d.wk);return w?(d.type==='T'?w.tCal:w.rCal):null;}),borderColor:'#991b1b',borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false,tension:0},
+    ]},
+    options:{...base,plugins:{legend:nl,tooltip:tip},scales:{x:{...xs,ticks:{...xs.ticks,maxRotation:38}},y:ys}},
+  });
+
+  CH.bf = new Chart(document.getElementById('ch-bf'), {
+    type:'line',
+    data:{ labels:vd.map(d=>d.dt), datasets:[
+      {label:'Energy',data:vd.map(d=>d.egy||null),borderColor:'#059669',borderWidth:2,pointRadius:3,tension:.4,fill:false,spanGaps:true},
+      {label:'Hunger',data:vd.map(d=>d.hun||null),borderColor:'#b5863a',borderWidth:2,pointRadius:3,tension:.4,fill:false,spanGaps:true},
+      {label:'Stress',data:vd.map(d=>d.str||null),borderColor:'#991b1b',borderWidth:2,pointRadius:3,tension:.4,fill:false,spanGaps:true},
+    ]},
+    options:{...base,plugins:{legend:nl,tooltip:tip},scales:{x:{...xs,ticks:{...xs.ticks,maxRotation:38}},y:{...ys,min:1,max:10,ticks:{...ys.ticks,stepSize:2}}}},
+  });
+
+  const wkCals = vw.map(w => { const s=wkStats(w.wk); return s&&s.avgCal>0?Math.round(s.avgCal):Math.round((w.tCal*5+w.rCal*2)/7); });
+  CH.c = new Chart(document.getElementById('ch-wc'), {
+    type:'line',
+    data:{labels:vw.map(d=>wkLabel(d.wk)),datasets:[{label:'Avg cals',data:wkCals,borderColor:'#7c3aed',borderWidth:2,backgroundColor:'rgba(124,58,237,0.08)',pointRadius:3,tension:.4,fill:true}]},
+    options:{...base,plugins:{legend:nl,tooltip:tip},scales:{x:xs,y:ys}},
+  });
+
+  CH.d = new Chart(document.getElementById('ch-cd'), {
+    type:'bar',
+    data:{labels:vw.map(d=>wkLabel(d.wk)),datasets:[{label:'Cardio (min)',data:vw.map(d=>d.cardio||0),backgroundColor:vw.map(d=>(PC[d.ph]||'#888')+'aa'),borderColor:vw.map(d=>PC[d.ph]||'#888'),borderWidth:1.5,borderRadius:3}]},
+    options:{...base,plugins:{legend:nl,tooltip:tip},scales:{x:xs,y:ys}},
+  });
+}
+
+/* ==============================
+   HISTORY
+============================== */
+function renderHistory() {
+  document.getElementById('hd-body').innerHTML = DAILY.map(d => {
+    return `<tr>
+      <td class="tc">${d.dt}</td><td>${d.wk}</td>
+      <td class="tc"><span class="type-pill" style="background:${d.type==='T'?'#b5863a22':'#9ca3af22'};color:${d.type==='T'?'#b5863a':'#6b7280'}">${d.type==='T'?'Training':'Rest'}</span></td>
+      <td>${d.wt||'—'}</td><td>${d.kcal||'—'}</td><td>${d.pro||'—'}</td><td>${d.cb||'—'}</td><td>${d.fat||'—'}</td>
+      <td>${d.slp||'—'}</td><td>${(d.stp||0).toLocaleString()}</td>
+      <td>${d.egy||'—'}</td><td>${d.hun||'—'}</td>
+      <td style="${d.str>=8?'color:#991b1b;font-weight:700':''}">${d.str||'—'}</td>
+      <td class="tc" style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${d.nt||'—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="14" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No daily entries yet.</td></tr>';
+
+  const wks = [...new Set(DAILY.map(d=>d.wk))].sort((a,b)=>a-b);
+  document.getElementById('hw-body').innerHTML = wks.map((wk,i) => {
+    const s = wkStats(wk); if (!s) return '';
+    const prev = i > 0 ? wkStats(wks[i-1]) : null;
+    const ch = prev ? s.avgWt - prev.avgWt : 0;
+    const w = WEEKS.find(x=>x.wk===wk);
+    const pc = PC[w?.ph||'Deficit'] || '#888';
+    return `<tr>
+      <td>${wk}</td><td class="tc">${wkLabel(wk)}</td>
+      <td class="tc"><span class="phase-pill" style="background:${pc}22;color:${pc}">${w?.ph||'—'}</span></td>
+      <td>${s.avgWt.toFixed(1)}</td>
+      <td class="${ch<0?'trend-dn':ch>0.05?'trend-up':''}">${ch>0?'+':''}${ch.toFixed(2)}</td>
+      <td>${Math.round(s.avgCal).toLocaleString()}</td>
+      <td>${Math.round(s.avgStp).toLocaleString()}</td>
+      <td>${s.avgSlp.toFixed(1)}</td>
+      <td>${s.avgEgy.toFixed(1)}</td>
+      <td style="${s.avgStr>6.5?'color:#991b1b;font-weight:700':''}">${s.avgStr.toFixed(1)}</td>
+      <td>${s.daysLogged}/${s.total}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="11" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No weekly data yet.</td></tr>';
+}
+
+function htab(t) {
+  document.getElementById('ht-d').classList.toggle('active', t==='d');
+  document.getElementById('ht-w').classList.toggle('active', t==='w');
+  document.getElementById('h-daily').style.display = t==='d' ? 'block' : 'none';
+  document.getElementById('h-weekly').style.display = t==='w' ? 'block' : 'none';
+}
+
+/* ==============================
+   FORMS
+============================== */
+function addDay() {
+  const wt = parseFloat(document.getElementById('f-wt').value);
+  const kc = parseInt(document.getElementById('f-kc').value) || 0;
+  if (!wt && !kc) { toast('Add at least a weight or calorie reading.'); return; }
+  const wkn = parseInt(document.getElementById('f-wk').value) || (DAILY.length ? Math.max(...DAILY.map(d=>d.wk)) : 1);
+  // Auto-create week if not exists
+  if (!WEEKS.find(w=>w.wk===wkn)) {
+    WEEKS.push({ wk:wkn, ph:'Deficit', gl:'', avgWt:0, ch:0, tCal:2000, rCal:1700, cardio:0 });
+    WEEKS.sort((a,b)=>a.wk-b.wk);
+  }
+  DAILY.push({
+    id: DAILY.length ? Math.max(...DAILY.map(d=>d.id))+1 : 1,
+    dt: document.getElementById('f-dt').value || new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short'}),
+    wk: wkn, type: document.getElementById('f-tp').value,
+    wt: wt||null, kcal: kc,
+    pro: parseInt(document.getElementById('f-pr').value)||0,
+    cb: parseInt(document.getElementById('f-cb').value)||0,
+    fat: parseInt(document.getElementById('f-ft').value)||0,
+    fib: parseInt(document.getElementById('f-fi').value)||0,
+    slp: parseFloat(document.getElementById('f-sl').value)||0,
+    stp: parseInt(document.getElementById('f-st').value)||0,
+    egy: parseInt(document.getElementById('f-eg').value)||0,
+    hun: parseInt(document.getElementById('f-hu').value)||0,
+    str: parseInt(document.getElementById('f-sr').value)||0,
+    nt: document.getElementById('f-nt').value,
+  });
+  ['f-dt','f-wt','f-kc','f-pr','f-cb','f-ft','f-fi','f-sl','f-st','f-nt'].forEach(x => document.getElementById(x).value='');
+  document.getElementById('f-eg').value=7; document.getElementById('sv-e').textContent=7;
+  document.getElementById('f-hu').value=5; document.getElementById('sv-h').textContent=5;
+  document.getElementById('f-sr').value=5; document.getElementById('sv-s').textContent=5;
+  save();
+  const ok = document.getElementById('day-ok'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',2500);
+  toast('Day logged ✓');
+  sv('dashboard'); renderCharts();
+}
+
+function addWeek() {
+  const wkn = parseInt(document.getElementById('w-n').value);
+  if (!wkn) { toast('Enter a week number.'); return; }
+  const data = {
+    wk: wkn, ph: document.getElementById('w-ph').value,
+    gl: document.getElementById('w-gl').value,
+    avgWt: 0, ch: 0,
+    tCal: parseInt(document.getElementById('w-tc').value)||0,
+    rCal: parseInt(document.getElementById('w-rc').value)||0,
+    cardio: parseInt(document.getElementById('w-cd').value)||0,
+    z: document.getElementById('w-cz').value,
+  };
+  const ex = WEEKS.find(w=>w.wk===wkn);
+  ex ? Object.assign(ex, data) : WEEKS.push(data);
+  WEEKS.sort((a,b)=>a.wk-b.wk);
+  save();
+  const ok = document.getElementById('week-ok'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',2500);
+  toast('Week saved ✓');
+  sv('dashboard'); renderCharts();
+}
+
+/* ==============================
+   EXPORT / IMPORT / CLEAR
+============================== */
+function exportData() {
+  if (!WEEKS.length && !DAILY.length) { toast('No data to export yet.'); return; }
+  const data = { version:'1.0', exported:new Date().toISOString(), weeks:WEEKS, daily:DAILY, config:CFG };
+  const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='barebones-data-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Data exported ✓');
+}
+
+function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.weeks && !data.daily) throw new Error('Invalid format');
+      if (data.weeks) WEEKS = data.weeks;
+      if (data.daily) DAILY = data.daily;
+      if (data.config) Object.assign(CFG, data.config);
+      if (CFG.startDate) { document.getElementById('start-date').value=CFG.startDate; document.getElementById('cfg-date').value=CFG.startDate; }
+      save(); renderLegend(); renderCharts();
+      toast('Data imported ✓');
+    } catch(err) { toast('Import failed — use a valid Barebones export file.'); }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function loadSample() {
+  if ((WEEKS.length || DAILY.length) && !confirm('This will replace your current data with sample data. Continue?')) return;
+  WEEKS = JSON.parse(JSON.stringify(SAMPLE_W));
+  DAILY = JSON.parse(JSON.stringify(SAMPLE_D));
+  CFG = { startDate:null, zoom:null, offset:0, fromWk:null, toWk:null };
+  document.getElementById('start-date').value='';
+  document.getElementById('cfg-date').value='';
+  save(); renderLegend(); renderCharts();
+  sv('dashboard');
+  toast('Sample data loaded ✓');
+}
+
+function clearAll() {
+  if (!confirm('This will permanently delete all your data. Export first if you want a backup. Continue?')) return;
+  WEEKS=[]; DAILY=[];
+  CFG={ startDate:null, zoom:null, offset:0, fromWk:null, toWk:null };
+  Object.values(CH).forEach(c=>{try{c.destroy();}catch(e){}});
+  CH={};
+  ['bb_w','bb_d','bb_c'].forEach(k=>localStorage.removeItem(k));
+  showEmpty();
+  toast('All data cleared.');
+}
+
+/* ==============================
+   INIT
+============================== */
+load();
+renderLegend();
+if (WEEKS.length || DAILY.length) {
+  renderCharts();
+} else {
+  showEmpty();
+}
+</script>
+</body>
+</html>
