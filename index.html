@@ -169,6 +169,20 @@ td.tc{font-family:var(--fb)}
 .toast{position:fixed;bottom:24px;right:24px;background:var(--near-black);color:var(--cream);padding:12px 20px;border-radius:var(--r-md);font-size:13px;font-family:var(--fh);box-shadow:var(--sh-md);z-index:1000;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
 
+/* === EDIT MODAL === */
+.modal-overlay{position:fixed;inset:0;background:rgba(1,11,19,.5);z-index:200;overflow-y:auto;padding:24px 16px;display:none}
+.modal-overlay.open{display:block}
+.modal-card{background:var(--surface);border-radius:var(--r-xl);max-width:520px;margin:0 auto;padding:28px;box-shadow:var(--sh-md)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:18px;font-weight:700;font-family:var(--fh)}
+.modal-close{font-size:22px;color:var(--t3);line-height:1;padding:4px 8px;border-radius:var(--r-sm);transition:all .15s}
+.modal-close:hover{background:var(--tint);color:var(--t1)}
+.edit-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;font-size:11px;font-weight:600;font-family:var(--fh);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--t2);background:var(--bg);cursor:pointer;transition:all .15s}
+.edit-btn:hover{border-color:var(--green);color:var(--green);background:var(--surface)}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.modal-actions .btn-primary{flex:1}
+.modal-actions .btn-danger{width:auto;padding:11px 16px}
+
 /* === RESPONSIVE === */
 @media(max-width:640px){
   .chart-grid-2{grid-template-columns:1fr}
@@ -378,7 +392,7 @@ td.tc{font-family:var(--fb)}
     <div class="card-body" style="max-width:540px">
       <div class="fr2">
         <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="w-n" placeholder="1"></div>
-        <div class="field"><label class="field-label">Phase</label><select class="field-input" id="w-ph"><option>Deficit</option><option>Recovery</option><option>Surplus</option><option>Maintenance</option></select></div>
+        <div class="field"><label class="field-label">Phase</label><select class="field-input" id="w-ph"></select></div>
       </div>
       <div class="field"><label class="field-label">Phase goal</label><input class="field-input" type="text" id="w-gl" placeholder="What is the primary goal this week?"></div>
       <hr class="divider">
@@ -404,7 +418,7 @@ td.tc{font-family:var(--fb)}
   </div>
   <div class="card">
     <div id="h-daily" class="table-wrap">
-      <table><thead><tr><th>Date</th><th>Wk</th><th>Type</th><th>Weight</th><th>Cals</th><th>Pro</th><th>Carbs</th><th>Fat</th><th>Sleep</th><th>Steps</th><th>Energy</th><th>Hunger</th><th>Stress</th><th>Notes</th></tr></thead><tbody id="hd-body"></tbody></table>
+      <table><thead><tr><th>Date</th><th>Wk</th><th>Type</th><th>Weight</th><th>Cals</th><th>Pro</th><th>Carbs</th><th>Fat</th><th>Sleep</th><th>Steps</th><th>Energy</th><th>Hunger</th><th>Stress</th><th>Notes</th><th></th></tr></thead><tbody id="hd-body"></tbody></table>
     </div>
     <div id="h-weekly" class="table-wrap" style="display:none">
       <table><thead><tr><th>Wk</th><th>Date</th><th>Phase</th><th>Avg wt</th><th>Change</th><th>Avg cals</th><th>Avg steps</th><th>Avg sleep</th><th>Energy</th><th>Stress</th><th>Days</th></tr></thead><tbody id="hw-body"></tbody></table>
@@ -421,6 +435,16 @@ td.tc{font-family:var(--fb)}
     <div class="s-title">Protocol start date</div>
     <div class="s-desc">Set this to the first day of your current protocol. All chart labels switch from "W1, W2..." to real calendar dates like "6 Jan", "13 Jan".</div>
     <div class="field" style="max-width:200px"><label class="field-label">Start date</label><input type="date" class="field-input" id="cfg-date" onchange="setStartDate(this.value)"></div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-title">Training phases</div>
+    <div class="s-desc">The four default phases are always available. Add custom phases for your specific protocol — like Peaking, Reverse Diet, or Maintenance Surplus. Custom phases can be removed at any time.</div>
+    <div id="phases-list" style="margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input class="field-input" type="text" id="new-phase" placeholder="e.g. Peaking, Reverse Diet, Recomp..." style="flex:1;min-width:200px;max-width:300px" onkeydown="if(event.key==='Enter')addPhase()">
+      <button class="btn-secondary" onclick="addPhase()"><i class="ti ti-plus"></i>Add phase</button>
+    </div>
   </div>
 
   <div class="s-section">
@@ -451,6 +475,46 @@ td.tc{font-family:var(--fb)}
 
 </main>
 
+<!-- Edit Day Modal -->
+<div id="edit-modal" class="modal-overlay" onclick="if(event.target===this)closeEdit()">
+  <div class="modal-card">
+    <div class="modal-hd">
+      <h2 class="modal-title">Edit day</h2>
+      <button class="modal-close" onclick="closeEdit()" aria-label="Close">×</button>
+    </div>
+    <div class="fr2">
+      <div class="field"><label class="field-label">Date / label</label><input class="field-input" type="text" id="e-dt" placeholder="e.g. 17 Mar"></div>
+      <div class="field"><label class="field-label">Day type</label><select class="field-input" id="e-tp"><option value="T">Training day</option><option value="R">Rest day</option></select></div>
+    </div>
+    <div class="fr2">
+      <div class="field"><label class="field-label">Body weight (kg)</label><input class="field-input" type="number" step="0.1" id="e-wt" placeholder="83.0"></div>
+      <div class="field"><label class="field-label">Total calories</label><input class="field-input" type="number" id="e-kc" placeholder="2325"></div>
+    </div>
+    <div class="fr4">
+      <div class="field"><label class="field-label">Protein (g)</label><input class="field-input" type="number" id="e-pr" placeholder="200"></div>
+      <div class="field"><label class="field-label">Carbs (g)</label><input class="field-input" type="number" id="e-cb" placeholder="280"></div>
+      <div class="field"><label class="field-label">Fat (g)</label><input class="field-input" type="number" id="e-ft" placeholder="45"></div>
+      <div class="field"><label class="field-label">Fiber (g)</label><input class="field-input" type="number" id="e-fi" placeholder="35"></div>
+    </div>
+    <hr class="divider">
+    <div class="fr3">
+      <div class="field"><label class="field-label">Sleep (hrs)</label><input class="field-input" type="number" step="0.5" id="e-sl" placeholder="7.5"></div>
+      <div class="field"><label class="field-label">Steps</label><input class="field-input" type="number" id="e-st" placeholder="10000"></div>
+      <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="e-wk" placeholder="1"></div>
+    </div>
+    <hr class="divider">
+    <div class="section-title">Biofeedback</div>
+    <div class="slider-row"><div class="slider-hd"><span class="slider-lbl">Energy</span><span class="slider-val" id="ev-e">7</span></div><input type="range" min="1" max="10" value="7" id="e-eg" oninput="document.getElementById('ev-e').textContent=this.value"></div>
+    <div class="slider-row"><div class="slider-hd"><span class="slider-lbl">Hunger</span><span class="slider-val" id="ev-h">5</span></div><input type="range" min="1" max="10" value="5" id="e-hu" oninput="document.getElementById('ev-h').textContent=this.value"></div>
+    <div class="slider-row" style="margin-bottom:16px"><div class="slider-hd"><span class="slider-lbl">Stress</span><span class="slider-val" id="ev-s">5</span></div><input type="range" min="1" max="10" value="5" id="e-sr" oninput="document.getElementById('ev-s').textContent=this.value"></div>
+    <div class="field"><label class="field-label">Notes</label><input class="field-input" type="text" id="e-nt" placeholder="Anything notable..."></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveEdit()">Save changes</button>
+      <button class="btn-danger" onclick="deleteDay()"><i class="ti ti-trash"></i>Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -464,6 +528,9 @@ let CFG = { startDate: null, zoom: null, offset: 0, fromWk: null, toWk: null };
 let CH = {};
 
 const PC = { Deficit:'#b5863a', Recovery:'#7c3aed', Surplus:'#059669', Maintenance:'#6b7280' };
+const EXTRA_COLORS = ['#0891b2','#be123c','#ca8a04','#9333ea','#ea580c','#0284c7','#4f46e5','#b45309','#0f766e','#c2410c'];
+const DEFAULT_PHASES = ['Deficit','Recovery','Surplus','Maintenance'];
+let CUSTOM_PHASES = [];
 
 const SAMPLE_W = [
   {wk:1,ph:'Deficit',gl:'Establish deficit, build tracking habits',avgWt:96.0,ch:0,tCal:2565,rCal:2020,cardio:0},
@@ -505,6 +572,7 @@ function save() {
     localStorage.setItem('bb_w', JSON.stringify(WEEKS));
     localStorage.setItem('bb_d', JSON.stringify(DAILY));
     localStorage.setItem('bb_c', JSON.stringify(CFG));
+    localStorage.setItem('bb_p', JSON.stringify(CUSTOM_PHASES));
   } catch(e) {}
 }
 
@@ -513,9 +581,11 @@ function load() {
     const w = localStorage.getItem('bb_w');
     const d = localStorage.getItem('bb_d');
     const c = localStorage.getItem('bb_c');
+    const p = localStorage.getItem('bb_p');
     if (w) WEEKS = JSON.parse(w);
     if (d) DAILY = JSON.parse(d);
     if (c) Object.assign(CFG, JSON.parse(c));
+    if (p) CUSTOM_PHASES = JSON.parse(p);
     if (CFG.startDate) {
       document.getElementById('start-date').value = CFG.startDate;
       document.getElementById('cfg-date').value = CFG.startDate;
@@ -527,6 +597,70 @@ function load() {
    HELPERS
 ============================== */
 const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+function allPhases() { return [...DEFAULT_PHASES, ...CUSTOM_PHASES]; }
+
+function phaseColor(ph) {
+  if (PC[ph]) return PC[ph];
+  const idx = CUSTOM_PHASES.indexOf(ph);
+  return idx >= 0 ? EXTRA_COLORS[idx % EXTRA_COLORS.length] : '#6b7280';
+}
+
+function buildPhaseOptions(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = allPhases().map(ph => `<option value="${ph}">${ph}</option>`).join('');
+  if (cur && allPhases().includes(cur)) sel.value = cur;
+}
+
+function updatePhaseSelects() {
+  buildPhaseOptions('w-ph');
+}
+
+function renderPhasesList() {
+  const el = document.getElementById('phases-list');
+  if (!el) return;
+  el.innerHTML = [
+    ...DEFAULT_PHASES.map(ph =>
+      `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-s)">
+        <span style="width:10px;height:10px;border-radius:2px;background:${phaseColor(ph)};flex-shrink:0;display:inline-block"></span>
+        <span style="font-size:13px;font-family:var(--fh);color:var(--t1)">${ph}</span>
+        <span style="font-size:11px;color:var(--t3);margin-left:auto;font-family:var(--fh)">Default</span>
+      </div>`
+    ),
+    ...CUSTOM_PHASES.map((ph, i) =>
+      `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-s)">
+        <span style="width:10px;height:10px;border-radius:2px;background:${phaseColor(ph)};flex-shrink:0;display:inline-block"></span>
+        <span style="font-size:13px;font-family:var(--fh);color:var(--t1)">${ph}</span>
+        <button onclick="removePhase(${i})" style="margin-left:auto;font-size:11px;color:#991b1b;font-family:var(--fh);padding:2px 9px;border:1px solid #fca5a5;border-radius:var(--r-sm);background:#fee2e2;cursor:pointer">Remove</button>
+      </div>`
+    ),
+  ].join('') || '';
+}
+
+function addPhase() {
+  const inp = document.getElementById('new-phase');
+  const name = inp.value.trim();
+  if (!name) { toast('Enter a phase name.'); return; }
+  if (allPhases().map(p=>p.toLowerCase()).includes(name.toLowerCase())) {
+    toast('That phase already exists.'); return;
+  }
+  CUSTOM_PHASES.push(name);
+  save(); updatePhaseSelects(); renderPhasesList(); renderLegend();
+  inp.value = '';
+  toast(`"${name}" added ✓`);
+}
+
+function removePhase(idx) {
+  const ph = CUSTOM_PHASES[idx];
+  if (WEEKS.some(w => w.ph === ph)) {
+    if (!confirm(`"${ph}" is used by existing weeks. Removing it won't affect those weeks, but it won't appear in the dropdown going forward. Continue?`)) return;
+  }
+  CUSTOM_PHASES.splice(idx, 1);
+  save(); updatePhaseSelects(); renderPhasesList(); renderLegend();
+  toast('Phase removed.');
+}
 
 function wkLabel(wk) {
   if (!CFG.startDate) return 'W' + wk;
@@ -777,14 +911,16 @@ function renderStrip() {
   strip.innerHTML = WEEKS.map(w => {
     const active = vis.has(w.wk);
     const h = w.avgWt > 0 ? Math.round(5+20*(1-(w.avgWt-minW)/r)) : 12;
-    const col = PC[w.ph] || '#888';
+    const col = phaseColor(w.ph);
     return `<div class="strip-bar" title="${wkLabel(w.wk)}: ${w.avgWt||'?'}kg · ${w.ph}" onclick="jumpTo(${w.wk})" style="height:${h}px;background:${active?col:col+'50'}"></div>`;
   }).join('');
 }
 
 function renderLegend() {
-  document.getElementById('legend').innerHTML = Object.entries(PC).map(([p,c]) =>
-    `<span class="legend-item"><span class="legend-dot" style="background:${c}"></span>${p}</span>`
+  const usedPhases = [...new Set(WEEKS.map(w=>w.ph))];
+  const toShow = usedPhases.length ? usedPhases : DEFAULT_PHASES;
+  document.getElementById('legend').innerHTML = toShow.map(ph =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${phaseColor(ph)}"></span>${ph}</span>`
   ).join('');
 }
 
@@ -816,7 +952,7 @@ function renderCharts() {
     data:{ labels:vw.map(d=>wkLabel(d.wk)), datasets:[{
       label:'Weight (kg)', data:vw.map(d=>d.avgWt>0?d.avgWt:null),
       borderColor:'#0a4834', borderWidth:2.5,
-      pointBackgroundColor:vw.map(d=>PC[d.ph]),
+      pointBackgroundColor:vw.map(d=>phaseColor(d.ph)),
       pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, pointBorderWidth:2,
       tension:.3, fill:false, spanGaps:true,
     }]},
@@ -851,7 +987,7 @@ function renderCharts() {
 
   CH.d = new Chart(document.getElementById('ch-cd'), {
     type:'bar',
-    data:{labels:vw.map(d=>wkLabel(d.wk)),datasets:[{label:'Cardio (min)',data:vw.map(d=>d.cardio||0),backgroundColor:vw.map(d=>(PC[d.ph]||'#888')+'aa'),borderColor:vw.map(d=>PC[d.ph]||'#888'),borderWidth:1.5,borderRadius:3}]},
+    data:{labels:vw.map(d=>wkLabel(d.wk)),datasets:[{label:'Cardio (min)',data:vw.map(d=>d.cardio||0),backgroundColor:vw.map(d=>phaseColor(d.ph)+'aa'),borderColor:vw.map(d=>phaseColor(d.ph)),borderWidth:1.5,borderRadius:3}]},
     options:{...base,plugins:{legend:nl,tooltip:tip},scales:{x:xs,y:ys}},
   });
 }
@@ -869,8 +1005,9 @@ function renderHistory() {
       <td>${d.egy||'—'}</td><td>${d.hun||'—'}</td>
       <td style="${d.str>=8?'color:#991b1b;font-weight:700':''}">${d.str||'—'}</td>
       <td class="tc" style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${d.nt||'—'}</td>
+      <td><button class="edit-btn" onclick="openEdit(${d.id})"><i class="ti ti-pencil" style="font-size:11px"></i>Edit</button></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="14" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No daily entries yet.</td></tr>';
+  }).join('') || '<tr><td colspan="15" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No daily entries yet.</td></tr>';
 
   const wks = [...new Set(DAILY.map(d=>d.wk))].sort((a,b)=>a-b);
   document.getElementById('hw-body').innerHTML = wks.map((wk,i) => {
@@ -878,7 +1015,7 @@ function renderHistory() {
     const prev = i > 0 ? wkStats(wks[i-1]) : null;
     const ch = prev ? s.avgWt - prev.avgWt : 0;
     const w = WEEKS.find(x=>x.wk===wk);
-    const pc = PC[w?.ph||'Deficit'] || '#888';
+    const pc = phaseColor(w?.ph||'Deficit');
     return `<tr>
       <td>${wk}</td><td class="tc">${wkLabel(wk)}</td>
       <td class="tc"><span class="phase-pill" style="background:${pc}22;color:${pc}">${w?.ph||'—'}</span></td>
@@ -1001,7 +1138,7 @@ function loadSample() {
   CFG = { startDate:null, zoom:null, offset:0, fromWk:null, toWk:null };
   document.getElementById('start-date').value='';
   document.getElementById('cfg-date').value='';
-  save(); renderLegend(); renderCharts();
+  save(); renderLegend(); updatePhaseSelects(); renderPhasesList(); renderCharts();
   sv('dashboard');
   toast('Sample data loaded ✓');
 }
@@ -1018,10 +1155,81 @@ function clearAll() {
 }
 
 /* ==============================
+   EDIT / DELETE
+============================== */
+let EDIT_ID = null;
+
+function openEdit(id) {
+  const e = DAILY.find(d => d.id === id);
+  if (!e) return;
+  EDIT_ID = id;
+  document.getElementById('e-dt').value = e.dt || '';
+  document.getElementById('e-tp').value = e.type || 'T';
+  document.getElementById('e-wt').value = e.wt || '';
+  document.getElementById('e-kc').value = e.kcal || '';
+  document.getElementById('e-pr').value = e.pro || '';
+  document.getElementById('e-cb').value = e.cb || '';
+  document.getElementById('e-ft').value = e.fat || '';
+  document.getElementById('e-fi').value = e.fib || '';
+  document.getElementById('e-sl').value = e.slp || '';
+  document.getElementById('e-st').value = e.stp || '';
+  document.getElementById('e-wk').value = e.wk || '';
+  document.getElementById('e-nt').value = e.nt || '';
+  const egy = e.egy || 7, hun = e.hun || 5, str = e.str || 5;
+  document.getElementById('e-eg').value = egy; document.getElementById('ev-e').textContent = egy;
+  document.getElementById('e-hu').value = hun; document.getElementById('ev-h').textContent = hun;
+  document.getElementById('e-sr').value = str; document.getElementById('ev-s').textContent = str;
+  document.getElementById('edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEdit() {
+  document.getElementById('edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  EDIT_ID = null;
+}
+
+function saveEdit() {
+  if (!EDIT_ID) return;
+  const idx = DAILY.findIndex(d => d.id === EDIT_ID);
+  if (idx === -1) return;
+  DAILY[idx] = {
+    ...DAILY[idx],
+    dt: document.getElementById('e-dt').value || DAILY[idx].dt,
+    type: document.getElementById('e-tp').value,
+    wk: parseInt(document.getElementById('e-wk').value) || DAILY[idx].wk,
+    wt: parseFloat(document.getElementById('e-wt').value) || null,
+    kcal: parseInt(document.getElementById('e-kc').value) || 0,
+    pro: parseInt(document.getElementById('e-pr').value) || 0,
+    cb: parseInt(document.getElementById('e-cb').value) || 0,
+    fat: parseInt(document.getElementById('e-ft').value) || 0,
+    fib: parseInt(document.getElementById('e-fi').value) || 0,
+    slp: parseFloat(document.getElementById('e-sl').value) || 0,
+    stp: parseInt(document.getElementById('e-st').value) || 0,
+    egy: parseInt(document.getElementById('e-eg').value) || 0,
+    hun: parseInt(document.getElementById('e-hu').value) || 0,
+    str: parseInt(document.getElementById('e-sr').value) || 0,
+    nt: document.getElementById('e-nt').value,
+  };
+  save(); closeEdit(); renderHistory(); renderCharts();
+  toast('Day updated ✓');
+}
+
+function deleteDay() {
+  if (!EDIT_ID) return;
+  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  DAILY = DAILY.filter(d => d.id !== EDIT_ID);
+  save(); closeEdit(); renderHistory(); renderCharts();
+  toast('Entry deleted.');
+}
+
+/* ==============================
    INIT
 ============================== */
 load();
 renderLegend();
+updatePhaseSelects();
+renderPhasesList();
 if (WEEKS.length || DAILY.length) {
   renderCharts();
 } else {
