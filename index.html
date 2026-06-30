@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +32,52 @@ input,select,textarea,button{font-family:var(--fb);font-size:14px}
 button{cursor:pointer;border:none;background:none}
 a{color:var(--green)}
 
-/* === HEADER === */
+/* === DARK MODE === */
+[data-theme="dark"] {
+  --bg: #0a4834;
+  --surface: #ebe1cf;
+  --tint: #f5efe0;
+  --t1: #010b13;
+  --t2: #4a5568;
+  --t3: #8a9099;
+  --border: #c8bda8;
+  --border-s: #ddd6c4;
+  --ok-bg: #f0fdf8;
+  --ok-b: #2d6a4f;
+  --warn-bg: #fffcf0;
+  --warn-b: #b5863a;
+  --info-bg: #eef2ff;
+  --info-b: #3730a3;
+}
+[data-theme="dark"] .week-strip{background:#010b13}
+[data-theme="dark"] .ws-lbl{color:rgba(235,225,207,0.55)}
+[data-theme="dark"] .rb{background:var(--tint);border-color:var(--border);color:var(--t2)}
+[data-theme="dark"] .rb.active{background:var(--green);border-color:var(--green);color:var(--cream)}
+[data-theme="dark"] .rb:hover:not(.active){border-color:var(--green);color:var(--green)}
+[data-theme="dark"] .pn{background:var(--tint);border-color:var(--border);color:var(--t2)}
+[data-theme="dark"] .pn:hover:not([disabled]){border-color:var(--green);color:var(--green)}
+[data-theme="dark"] .range-inp{background:var(--tint);border-color:var(--border);color:var(--t1)}
+[data-theme="dark"] .date-inp{background:var(--tint);border-color:var(--border);color:var(--t1)}
+[data-theme="dark"] .field-input{background:var(--tint);border-color:var(--border);color:var(--t1)}
+[data-theme="dark"] .field-input:focus{background:var(--surface);border-color:var(--green)}
+[data-theme="dark"] select.field-input option{background:var(--surface);color:var(--t1)}
+[data-theme="dark"] .edit-btn{background:var(--tint);border-color:var(--border);color:var(--t2)}
+[data-theme="dark"] .edit-btn:hover{border-color:var(--green);color:var(--green)}
+[data-theme="dark"] .btn-secondary{background:var(--tint);border-color:var(--border);color:var(--t1)}
+[data-theme="dark"] .btn-secondary:hover{background:var(--border)}
+[data-theme="dark"] .btn-danger{background:#fee2e2;border-color:#fca5a5;color:#991b1b}
+[data-theme="dark"] .modal-card{background:var(--surface)}
+[data-theme="dark"] .modal-close{color:var(--t3)}
+[data-theme="dark"] .modal-close:hover{background:var(--tint);color:var(--t1)}
+[data-theme="dark"] table tr:hover td{background:rgba(1,11,19,0.03)}
+[data-theme="dark"] .page-title{color:var(--cream)}
+[data-theme="dark"] .page-sub{color:rgba(235,225,207,0.7)}
+[data-theme="dark"] .empty-title{color:var(--cream)}
+[data-theme="dark"] .empty-desc{color:rgba(235,225,207,0.7)}
+[data-theme="dark"] .empty-mark{background:#010b13}
+.theme-toggle{display:flex;align-items:center;background:rgba(255,255,255,0.08);border-radius:var(--r-sm);padding:3px;cursor:pointer;gap:1px}
+.theme-opt{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:5px;font-size:15px;color:rgba(235,225,207,0.35);transition:all .2s}
+.theme-opt.on{background:rgba(255,255,255,0.16);color:var(--cream)}
 .app-header{background:var(--near-black);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:12px}
 .logo-mark{width:32px;height:32px;background:var(--green);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:16px;color:var(--cream);letter-spacing:-.02em;flex-shrink:0}
@@ -207,7 +252,11 @@ td.tc{font-family:var(--fb)}
       <div class="logo-sub">Training &amp; Nutrition Navigator</div>
     </div>
   </div>
-  <div>
+  <div style="display:flex;align-items:center;gap:4px">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark mode" role="button" tabindex="0" onkeydown="if(event.key==='Enter')toggleTheme()">
+      <span id="opt-light" class="theme-opt on" title="Light mode"><i class="ti ti-sun"></i></span>
+      <span id="opt-dark" class="theme-opt" title="Dark mode"><i class="ti ti-moon"></i></span>
+    </div>
     <button class="btn-ghost" onclick="sv('settings')">
       <i class="ti ti-settings" style="vertical-align:-2px;margin-right:4px;font-size:15px"></i>Settings
     </button>
@@ -935,7 +984,10 @@ function renderCharts() {
   updateZoomUI(); renderStrip(); updateMetrics(); updateCALM();
 
   const vw = visWks(), vd = visDaily();
-  const gc = 'rgba(1,11,19,0.06)', tc = 'rgba(1,11,19,0.38)';
+  // Cards are always light (white in light mode, cream in dark mode)
+  // so chart grid, tick and tooltip colours stay consistent across themes
+  const gc = 'rgba(1,11,19,0.06)';
+  const tc = 'rgba(1,11,19,0.38)';
   const tip = {
     backgroundColor:'#fff', titleColor:'#010b13', bodyColor:'#4a5568',
     borderColor:'#ddd8d0', borderWidth:1, padding:10, cornerRadius:8,
@@ -1155,6 +1207,27 @@ function clearAll() {
 }
 
 /* ==============================
+   THEME
+============================== */
+function isDark() { return document.documentElement.dataset.theme === 'dark'; }
+
+function toggleTheme() {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  document.getElementById('opt-light')?.classList.toggle('on', next === 'light');
+  document.getElementById('opt-dark')?.classList.toggle('on', next === 'dark');
+  localStorage.setItem('bb_theme', next);
+  if (WEEKS.length || DAILY.length) renderCharts();
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('bb_theme') || 'light';
+  document.documentElement.dataset.theme = saved;
+  document.getElementById('opt-light')?.classList.toggle('on', saved === 'light');
+  document.getElementById('opt-dark')?.classList.toggle('on', saved === 'dark');
+}
+
+/* ==============================
    EDIT / DELETE
 ============================== */
 let EDIT_ID = null;
@@ -1226,6 +1299,7 @@ function deleteDay() {
 /* ==============================
    INIT
 ============================== */
+applyTheme();
 load();
 renderLegend();
 updatePhaseSelects();
