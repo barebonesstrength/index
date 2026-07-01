@@ -329,6 +329,9 @@ td.tc{font-family:var(--fb)}
     <div class="card mb-16">
       <div class="card-body">
         <div class="chart-controls">
+          <button class="rb active" onclick="setWtView('weekly')" id="wt-wk">Weekly avg</button>
+          <button class="rb" onclick="setWtView('daily')" id="wt-dy">Daily</button>
+          <span style="width:1px;height:16px;background:var(--border-s);display:inline-block;margin:0 2px;flex-shrink:0"></span>
           <button class="pn" onclick="pan(-1)" id="pan-l" disabled>←</button>
           <button class="rb active" onclick="setZoom(null)" id="rb-all">All</button>
           <button class="rb" onclick="setZoom(4)" id="rb-4">4W</button>
@@ -574,6 +577,7 @@ td.tc{font-family:var(--fb)}
 let WEEKS = [];
 let DAILY = [];
 let CFG = { startDate: null, zoom: null, offset: 0, fromWk: null, toWk: null };
+let WT_VIEW = 'weekly'; // 'weekly' or 'daily'
 let CH = {};
 
 const PC = { Deficit:'#b5863a', Recovery:'#7c3aed', Surplus:'#059669', Maintenance:'#6b7280' };
@@ -999,17 +1003,32 @@ function renderCharts() {
   const nl = { display:false };
   const base = { responsive:true, maintainAspectRatio:false, animation:{duration:350} };
 
-  CH.w = new Chart(document.getElementById('ch-wt'), {
-    type:'line',
-    data:{ labels:vw.map(d=>wkLabel(d.wk)), datasets:[{
-      label:'Weight (kg)', data:vw.map(d=>d.avgWt>0?d.avgWt:null),
-      borderColor:'#0a4834', borderWidth:2.5,
-      pointBackgroundColor:vw.map(d=>phaseColor(d.ph)),
-      pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, pointBorderWidth:2,
-      tension:.3, fill:false, spanGaps:true,
-    }]},
-    options:{...base, plugins:{legend:nl,tooltip:{...tip,callbacks:{label:ctx=>ctx.raw?.toFixed(1)+' kg',afterLabel:ctx=>'Phase: '+vw[ctx.dataIndex]?.ph}}}, scales:{x:xs,y:{...ys,ticks:{...ys.ticks,callback:v=>v+' kg'}}}},
-  });
+  // Weight chart — weekly average or individual daily readings
+  if (WT_VIEW === 'daily' && vd.length) {
+    CH.w = new Chart(document.getElementById('ch-wt'), {
+      type:'line',
+      data:{ labels:vd.map(d=>d.dt), datasets:[{
+        label:'Weight (kg)', data:vd.map(d=>d.wt||null),
+        borderColor:'#0a4834', borderWidth:2,
+        pointBackgroundColor:vd.map(d=>phaseColor(WEEKS.find(w=>w.wk===d.wk)?.ph||'Deficit')),
+        pointBorderColor:'#fff', pointRadius:4, pointHoverRadius:6, pointBorderWidth:1.5,
+        tension:.3, fill:false, spanGaps:true,
+      }]},
+      options:{...base, plugins:{legend:nl,tooltip:{...tip,callbacks:{label:ctx=>ctx.raw!=null?ctx.raw.toFixed(1)+' kg':'No data'}}}, scales:{x:{...xs,ticks:{...xs.ticks,maxRotation:42}},y:{...ys,ticks:{...ys.ticks,callback:v=>v+' kg'}}}},
+    });
+  } else {
+    CH.w = new Chart(document.getElementById('ch-wt'), {
+      type:'line',
+      data:{ labels:vw.map(d=>wkLabel(d.wk)), datasets:[{
+        label:'Weight (kg)', data:vw.map(d=>d.avgWt>0?d.avgWt:null),
+        borderColor:'#0a4834', borderWidth:2.5,
+        pointBackgroundColor:vw.map(d=>phaseColor(d.ph)),
+        pointBorderColor:'#fff', pointRadius:5, pointHoverRadius:7, pointBorderWidth:2,
+        tension:.3, fill:false, spanGaps:true,
+      }]},
+      options:{...base, plugins:{legend:nl,tooltip:{...tip,callbacks:{label:ctx=>ctx.raw?.toFixed(1)+' kg',afterLabel:ctx=>'Phase: '+vw[ctx.dataIndex]?.ph}}}, scales:{x:xs,y:{...ys,ticks:{...ys.ticks,callback:v=>v+' kg'}}}},
+    });
+  }
 
   CH.dc = new Chart(document.getElementById('ch-dc'), {
     type:'bar',
@@ -1204,6 +1223,13 @@ function clearAll() {
   ['bb_w','bb_d','bb_c'].forEach(k=>localStorage.removeItem(k));
   showEmpty();
   toast('All data cleared.');
+}
+
+function setWtView(v) {
+  WT_VIEW = v;
+  document.getElementById('wt-wk').classList.toggle('active', v === 'weekly');
+  document.getElementById('wt-dy').classList.toggle('active', v === 'daily');
+  renderCharts();
 }
 
 /* ==============================
