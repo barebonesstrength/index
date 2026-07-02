@@ -268,6 +268,7 @@ td.tc{font-family:var(--fb)}
   <button class="nav-tab" data-v="log" onclick="sv('log')">Log day</button>
   <button class="nav-tab" data-v="week" onclick="sv('week')">Log week</button>
   <button class="nav-tab" data-v="history" onclick="sv('history')">History</button>
+  <button class="nav-tab" data-v="photos" onclick="sv('photos')">Photos</button>
   <button class="nav-tab" data-v="settings" onclick="sv('settings')">Settings</button>
 </nav>
 
@@ -322,6 +323,34 @@ td.tc{font-family:var(--fb)}
         </div>
         <div class="calm-label" style="margin-bottom:8px">M — Modify</div>
         <div class="verdict" id="verdict">—</div>
+      </div>
+    </div>
+
+    <!-- Progress photos (shown when 2+ photos exist) -->
+    <div id="dash-photos" class="card mb-16" style="display:none">
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+          <div class="card-title" style="margin-bottom:0">Progress comparison</div>
+          <button class="edit-btn" onclick="sv('photos')"><i class="ti ti-camera" style="font-size:11px"></i>Manage photos</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <select id="dash-cmp-l" class="field-input" onchange="updateDashCompare()" style="margin-bottom:8px;font-size:12px"></select>
+            <div style="position:relative;padding-bottom:115%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
+              <img id="dash-img-l" src="" alt="Before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none">
+              <div id="dash-empty-l" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo</div>
+            </div>
+            <div style="font-size:11px;color:var(--t3);margin-top:5px;text-align:center;font-family:var(--fh)" id="dash-lbl-l">—</div>
+          </div>
+          <div>
+            <select id="dash-cmp-r" class="field-input" onchange="updateDashCompare()" style="margin-bottom:8px;font-size:12px"></select>
+            <div style="position:relative;padding-bottom:115%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
+              <img id="dash-img-r" src="" alt="After" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none">
+              <div id="dash-empty-r" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo</div>
+            </div>
+            <div style="font-size:11px;color:var(--t3);margin-top:5px;text-align:center;font-family:var(--fh)" id="dash-lbl-r">—</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -525,6 +554,62 @@ td.tc{font-family:var(--fb)}
   </div>
 </div>
 
+<!-- ===== PHOTOS ===== -->
+<div id="view-photos" class="view">
+  <h1 class="page-title">Progress photos</h1>
+  <p class="page-sub">Upload progress photos, tag them to a week and phase, and compare across your protocol.</p>
+
+  <div class="card mb-16">
+    <div class="card-body" style="max-width:540px">
+      <div class="s-title" style="margin-bottom:4px">Add photo</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5">Photos are stored in your browser. Export your data regularly to back them up.</div>
+      <div class="fr2">
+        <div class="field"><label class="field-label">Date / label</label><input class="field-input" type="text" id="ph-dt" placeholder="e.g. 17 Mar"></div>
+        <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="ph-wk" placeholder="1" min="1"></div>
+      </div>
+      <div class="fr2">
+        <div class="field"><label class="field-label">Phase</label><select class="field-input" id="ph-ph"></select></div>
+        <div class="field"><label class="field-label">Notes</label><input class="field-input" type="text" id="ph-note" placeholder="Optional note..."></div>
+      </div>
+      <label style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--green);color:var(--cream);padding:11px 20px;border-radius:var(--r-md);font-size:13px;font-weight:600;font-family:var(--fh);cursor:pointer;transition:background .15s;width:100%">
+        <i class="ti ti-camera-plus"></i>Choose photo to upload
+        <input type="file" accept="image/*" onchange="uploadPhoto(event)" style="display:none" id="ph-file">
+      </label>
+      <div id="ph-ok" class="success-msg"><i class="ti ti-check"></i> Photo added.</div>
+    </div>
+  </div>
+
+  <div class="card mb-16" id="compare-card" style="display:none">
+    <div class="card-body">
+      <div class="s-title" style="margin-bottom:4px">Compare</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5">Default shows your earliest photo in the current phase versus your most recent. Use the dropdowns to pick any two.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <label class="field-label" style="margin-bottom:6px">Before</label>
+          <select id="cmp-l" class="field-input" onchange="renderCompare()" style="margin-bottom:10px;font-size:12px"></select>
+          <div style="position:relative;padding-bottom:130%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
+            <img id="cmp-img-l" src="" alt="Before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in" onclick="zoomPhoto(this.src)">
+            <div id="cmp-empty-l" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo selected</div>
+          </div>
+          <div style="font-size:12px;color:var(--t2);margin-top:7px;text-align:center;font-family:var(--fh)" id="cmp-lbl-l">—</div>
+        </div>
+        <div>
+          <label class="field-label" style="margin-bottom:6px">After</label>
+          <select id="cmp-r" class="field-input" onchange="renderCompare()" style="margin-bottom:10px;font-size:12px"></select>
+          <div style="position:relative;padding-bottom:130%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
+            <img id="cmp-img-r" src="" alt="After" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in" onclick="zoomPhoto(this.src)">
+            <div id="cmp-empty-r" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo selected</div>
+          </div>
+          <div style="font-size:12px;color:var(--t2);margin-top:7px;text-align:center;font-family:var(--fh)" id="cmp-lbl-r">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px"></div>
+  <div id="storage-warn" style="display:none;margin-top:16px;padding:11px 14px;background:var(--warn-bg);border-left:3px solid var(--warn-b);border-radius:0 var(--r-md) var(--r-md) 0;font-size:13px;color:var(--t1)"></div>
+</div>
+
 </main>
 
 <!-- Edit Day Modal -->
@@ -576,6 +661,7 @@ td.tc{font-family:var(--fb)}
 ============================== */
 let WEEKS = [];
 let DAILY = [];
+let PHOTOS = [];
 let CFG = { startDate: null, zoom: null, offset: 0, fromWk: null, toWk: null };
 let WT_VIEW = 'weekly'; // 'weekly' or 'daily'
 let CH = {};
@@ -626,7 +712,8 @@ function save() {
     localStorage.setItem('bb_d', JSON.stringify(DAILY));
     localStorage.setItem('bb_c', JSON.stringify(CFG));
     localStorage.setItem('bb_p', JSON.stringify(CUSTOM_PHASES));
-  } catch(e) {}
+    localStorage.setItem('bb_photos', JSON.stringify(PHOTOS));
+  } catch(e) { throw e; }
 }
 
 function load() {
@@ -639,6 +726,8 @@ function load() {
     if (d) DAILY = JSON.parse(d);
     if (c) Object.assign(CFG, JSON.parse(c));
     if (p) CUSTOM_PHASES = JSON.parse(p);
+    const ph = localStorage.getItem('bb_photos');
+    if (ph) PHOTOS = JSON.parse(ph);
     if (CFG.startDate) {
       document.getElementById('start-date').value = CFG.startDate;
       document.getElementById('cfg-date').value = CFG.startDate;
@@ -669,6 +758,7 @@ function buildPhaseOptions(selectId) {
 
 function updatePhaseSelects() {
   buildPhaseOptions('w-ph');
+  buildPhaseOptions('ph-ph');
 }
 
 function renderPhasesList() {
@@ -772,6 +862,7 @@ function sv(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
   if (id === 'history') renderHistory();
+  if (id === 'photos') renderPhotos();
   if (id === 'log') {
     const mx = DAILY.length ? Math.max(...DAILY.map(d=>d.wk)) : 1;
     document.getElementById('log-wkn').textContent = mx;
@@ -784,18 +875,24 @@ function sv(id) {
 ============================== */
 function updateMetrics() {
   if (!WEEKS.length) return;
-  // Compute avgWt from daily data where available
   WEEKS.forEach(w => { const s = wkStats(w.wk); if (s && s.avgWt > 0) w.avgWt = +s.avgWt.toFixed(2); });
 
-  const latD = DAILY.filter(d=>d.wt).slice(-1)[0];
+  const dailyWithWt = DAILY.filter(d => d.wt);
+  const firstD = dailyWithWt[0];
+  const latD = dailyWithWt.slice(-1)[0];
+
+  // Current weight: most recent daily reading
   const curWt = latD ? latD.wt : WEEKS[WEEKS.length-1].avgWt;
-  const startWt = WEEKS[0].avgWt;
+  // Start weight: first daily log entry weight (not week average)
+  const startWt = firstD ? firstD.wt : WEEKS[0].avgWt;
+  const startLabel = firstD ? (firstD.dt || `W${firstD.wk}`) : `W${WEEKS[0].wk}`;
   const nwk = WEEKS.length;
   const tl = (startWt - curWt).toFixed(1);
+
   document.getElementById('mw').textContent = curWt.toFixed(1) + ' kg';
-  document.getElementById('mws').textContent = 'Started at ' + startWt + ' kg';
+  document.getElementById('mws').textContent = 'Started at ' + startWt.toFixed(1) + ' kg · ' + startLabel;
   document.getElementById('ml').textContent = tl + ' kg';
-  document.getElementById('mls').textContent = 'Over ' + nwk + ' weeks';
+  document.getElementById('mls').textContent = startWt.toFixed(1) + ' kg → ' + curWt.toFixed(1) + ' kg';
   document.getElementById('ma').textContent = ((startWt - curWt) / nwk).toFixed(2) + ' kg';
   const lw = WEEKS[WEEKS.length-1];
   const pe = document.getElementById('mp');
@@ -1220,7 +1317,7 @@ function clearAll() {
   CFG={ startDate:null, zoom:null, offset:0, fromWk:null, toWk:null };
   Object.values(CH).forEach(c=>{try{c.destroy();}catch(e){}});
   CH={};
-  ['bb_w','bb_d','bb_c'].forEach(k=>localStorage.removeItem(k));
+  ['bb_w','bb_d','bb_c','bb_p','bb_photos'].forEach(k=>localStorage.removeItem(k));
   showEmpty();
   toast('All data cleared.');
 }
@@ -1230,6 +1327,170 @@ function setWtView(v) {
   document.getElementById('wt-wk').classList.toggle('active', v === 'weekly');
   document.getElementById('wt-dy').classList.toggle('active', v === 'daily');
   renderCharts();
+}
+
+/* ==============================
+   PHOTOS
+============================== */
+function compressImage(file, maxDim, quality, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const r = Math.min(maxDim / img.width, maxDim / img.height, 1);
+      const w = Math.round(img.width * r), h = Math.round(img.height * r);
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(cv.toDataURL('image/jpeg', quality));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function photoLabel(p) {
+  return `W${p.wk} · ${p.date} — ${p.ph}`;
+}
+
+function getDefaultCompareIds() {
+  if (PHOTOS.length < 2) return [null, null];
+  const curPh = WEEKS.length ? WEEKS[WEEKS.length-1].ph : null;
+  let left = curPh ? PHOTOS.find(p => p.ph === curPh) : null;
+  if (!left) left = PHOTOS[0];
+  const right = [...PHOTOS].reverse().find(p => p.id !== left.id) || PHOTOS[PHOTOS.length-1];
+  return [left.id, right.id];
+}
+
+function populatePhotoSelects(...ids) {
+  const opts = ['<option value="">— Select photo —</option>',
+    ...PHOTOS.map(p => `<option value="${p.id}">${photoLabel(p)}</option>`)
+  ].join('');
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = opts; });
+}
+
+function applyPhotoToSlot(imgId, lblId, emptyId, photoId) {
+  const img = document.getElementById(imgId);
+  const lbl = document.getElementById(lblId);
+  const emp = document.getElementById(emptyId);
+  const p = PHOTOS.find(x => x.id === parseInt(photoId));
+  if (p && img) {
+    img.src = p.data; img.style.display = 'block';
+    if (emp) emp.style.display = 'none';
+    if (lbl) lbl.textContent = photoLabel(p) + (p.note ? ' · ' + p.note : '');
+  } else if (img) {
+    img.src = ''; img.style.display = 'none';
+    if (emp) emp.style.display = 'flex';
+    if (lbl) lbl.textContent = '—';
+  }
+}
+
+function renderCompare() {
+  applyPhotoToSlot('cmp-img-l','cmp-lbl-l','cmp-empty-l', document.getElementById('cmp-l')?.value);
+  applyPhotoToSlot('cmp-img-r','cmp-lbl-r','cmp-empty-r', document.getElementById('cmp-r')?.value);
+}
+
+function updateDashCompare() {
+  applyPhotoToSlot('dash-img-l','dash-lbl-l','dash-empty-l', document.getElementById('dash-cmp-l')?.value);
+  applyPhotoToSlot('dash-img-r','dash-lbl-r','dash-empty-r', document.getElementById('dash-cmp-r')?.value);
+}
+
+function renderPhotos() {
+  const has2 = PHOTOS.length >= 2;
+  ['compare-card','dash-photos'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = has2 ? 'block' : 'none';
+  });
+
+  populatePhotoSelects('cmp-l','cmp-r','dash-cmp-l','dash-cmp-r');
+
+  const [lId, rId] = getDefaultCompareIds();
+  [['cmp-l',lId],['cmp-r',rId],['dash-cmp-l',lId],['dash-cmp-r',rId]].forEach(([id,val]) => {
+    const el = document.getElementById(id);
+    if (el && val) el.value = val;
+  });
+
+  renderCompare(); updateDashCompare();
+
+  // Photo grid
+  const grid = document.getElementById('photo-grid');
+  if (grid) {
+    grid.innerHTML = !PHOTOS.length
+      ? `<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--t3);font-family:var(--fh);font-size:13px">No photos yet. Add your first progress photo above.</div>`
+      : PHOTOS.map(p => `
+          <div style="border-radius:var(--r-lg);overflow:hidden;background:var(--surface);border:1px solid var(--border-s);box-shadow:var(--sh-xs)">
+            <div style="position:relative;padding-bottom:130%;background:var(--tint)">
+              <img src="${p.data}" alt="W${p.wk}" loading="lazy"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in"
+                onclick="zoomPhoto('${p.id}')">
+              <span style="position:absolute;top:8px;left:8px;background:${phaseColor(p.ph)};color:#fff;font-size:10px;font-weight:700;font-family:var(--fh);padding:2px 8px;border-radius:9999px;letter-spacing:.06em">${p.ph}</span>
+            </div>
+            <div style="padding:10px 12px">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:13px;font-weight:600;font-family:var(--fh);color:var(--t1)">W${p.wk} · ${p.date}</div>
+                <button onclick="deletePhoto(${p.id})" style="color:var(--t3);cursor:pointer;padding:3px 5px;border-radius:4px" title="Delete photo"><i class="ti ti-trash" style="font-size:13px"></i></button>
+              </div>
+              ${p.note ? `<div style="font-size:11px;color:var(--t2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.note}</div>` : ''}
+            </div>
+          </div>`).join('');
+  }
+  checkStorage();
+}
+
+function uploadPhoto(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) { toast('Please select an image file.'); return; }
+  compressImage(file, 700, 0.72, data => {
+    const wkn = parseInt(document.getElementById('ph-wk').value) || (WEEKS.length ? WEEKS[WEEKS.length-1].wk : 1);
+    PHOTOS.push({
+      id: Date.now(),
+      date: document.getElementById('ph-dt').value || new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short'}),
+      wk: wkn,
+      ph: document.getElementById('ph-ph').value || 'Deficit',
+      note: document.getElementById('ph-note').value,
+      data,
+    });
+    try {
+      save();
+    } catch(err) {
+      PHOTOS.pop();
+      toast('Storage full — export your data to free up space, then try again.');
+      e.target.value = ''; return;
+    }
+    renderPhotos();
+    const ok = document.getElementById('ph-ok'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',2500);
+    toast('Photo added ✓');
+    e.target.value = '';
+    document.getElementById('ph-note').value = '';
+  });
+}
+
+function deletePhoto(id) {
+  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  PHOTOS = PHOTOS.filter(p => p.id !== id);
+  save(); renderPhotos(); toast('Photo deleted.');
+}
+
+function zoomPhoto(id) {
+  const p = PHOTOS.find(x => x.id === parseInt(id));
+  if (!p) return;
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(1,11,19,.9);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out';
+  ov.innerHTML = `<img src="${p.data}" style="max-width:100%;max-height:90vh;border-radius:var(--r-md);object-fit:contain;box-shadow:0 16px 48px rgba(0,0,0,.5)">`;
+  ov.onclick = () => document.body.removeChild(ov);
+  document.body.appendChild(ov);
+}
+
+function checkStorage() {
+  try {
+    let total = 0;
+    for (let k in localStorage) { if (localStorage.hasOwnProperty(k)) total += (localStorage[k]?.length||0)*2; }
+    const el = document.getElementById('storage-warn'); if (!el) return;
+    const mb = (total/1048576).toFixed(1);
+    if (total > 3.5*1048576) {
+      el.style.display='block';
+      el.innerHTML = `<strong>Storage is ${mb}MB of ~5MB used.</strong> Export your data regularly. If you run into issues adding photos, export then clear some older ones.`;
+    } else { el.style.display='none'; }
+  } catch(e) {}
 }
 
 /* ==============================
@@ -1330,6 +1591,7 @@ load();
 renderLegend();
 updatePhaseSelects();
 renderPhasesList();
+renderPhotos();
 if (WEEKS.length || DAILY.length) {
   renderCharts();
 } else {
