@@ -502,7 +502,7 @@ td.tc{font-family:var(--fb)}
       <table><thead><tr><th>Date</th><th>Wk</th><th>Type</th><th>Weight</th><th>Cals</th><th>Pro</th><th>Carbs</th><th>Fat</th><th>Sleep</th><th>Steps</th><th>Energy</th><th>Hunger</th><th>Stress</th><th>Notes</th><th></th></tr></thead><tbody id="hd-body"></tbody></table>
     </div>
     <div id="h-weekly" class="table-wrap" style="display:none">
-      <table><thead><tr><th>Wk</th><th>Date</th><th>Phase</th><th>Avg wt</th><th>Change</th><th>Avg cals</th><th>Avg steps</th><th>Avg sleep</th><th>Energy</th><th>Stress</th><th>Days</th></tr></thead><tbody id="hw-body"></tbody></table>
+      <table><thead><tr><th>Wk</th><th>Date</th><th>Phase</th><th>Goal</th><th>Train cals</th><th>Rest cals</th><th>Cardio</th><th>Avg wt</th><th>Change</th><th>Avg cals</th><th>Avg steps</th><th>Days</th><th></th></tr></thead><tbody id="hw-body"></tbody></table>
     </div>
   </div>
 </div>
@@ -648,6 +648,32 @@ td.tc{font-family:var(--fb)}
     <div class="modal-actions">
       <button class="btn-primary" onclick="saveEdit()">Save changes</button>
       <button class="btn-danger" onclick="deleteDay()"><i class="ti ti-trash"></i>Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Week Modal -->
+<div id="week-edit-modal" class="modal-overlay" onclick="if(event.target===this)closeWeekEdit()">
+  <div class="modal-card">
+    <div class="modal-hd">
+      <h2 class="modal-title">Edit week <span id="we-num"></span></h2>
+      <button class="modal-close" onclick="closeWeekEdit()" aria-label="Close">×</button>
+    </div>
+    <div class="fr2">
+      <div class="field"><label class="field-label">Phase</label><select class="field-input" id="we-ph"></select></div>
+      <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="we-wk" min="1"></div>
+    </div>
+    <div class="field"><label class="field-label">Phase goal</label><input class="field-input" type="text" id="we-gl" placeholder="What is the primary goal this week?"></div>
+    <hr class="divider">
+    <div class="section-title">Daily calorie targets</div>
+    <div class="fr4">
+      <div class="field"><label class="field-label">Training cals</label><input class="field-input" type="number" id="we-tc" placeholder="2325"></div>
+      <div class="field"><label class="field-label">Rest cals</label><input class="field-input" type="number" id="we-rc" placeholder="1915"></div>
+      <div class="field"><label class="field-label">Cardio (min)</label><input class="field-input" type="number" id="we-cd" placeholder="60"></div>
+      <div class="field"><label class="field-label">Zone</label><select class="field-input" id="we-cz"><option>Zone 1</option><option>Zone 2</option><option>Zone 3</option><option>Zone 4</option><option>Mixed</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveWeekEdit()">Save changes</button>
     </div>
   </div>
 </div>
@@ -1188,26 +1214,32 @@ function renderHistory() {
     </tr>`;
   }).join('') || '<tr><td colspan="15" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No daily entries yet.</td></tr>';
 
-  const wks = [...new Set(DAILY.map(d=>d.wk))].sort((a,b)=>a-b);
-  document.getElementById('hw-body').innerHTML = wks.map((wk,i) => {
-    const s = wkStats(wk); if (!s) return '';
-    const prev = i > 0 ? wkStats(wks[i-1]) : null;
-    const ch = prev ? s.avgWt - prev.avgWt : 0;
+  // Show all weeks from WEEKS (targets) unioned with weeks that have daily data
+  const allWkNums = [...new Set([...WEEKS.map(w=>w.wk), ...DAILY.map(d=>d.wk)])].sort((a,b)=>a-b);
+  document.getElementById('hw-body').innerHTML = allWkNums.map((wk,i) => {
+    const s = wkStats(wk);
+    const prevWk = i > 0 ? allWkNums[i-1] : null;
+    const prev = prevWk ? wkStats(prevWk) : null;
+    const ch = (s && prev) ? s.avgWt - prev.avgWt : null;
     const w = WEEKS.find(x=>x.wk===wk);
     const pc = phaseColor(w?.ph||'Deficit');
+    const gl = w?.gl || '—';
     return `<tr>
-      <td>${wk}</td><td class="tc">${wkLabel(wk)}</td>
+      <td>${wk}</td>
+      <td class="tc">${wkLabel(wk)}</td>
       <td class="tc"><span class="phase-pill" style="background:${pc}22;color:${pc}">${w?.ph||'—'}</span></td>
-      <td>${s.avgWt.toFixed(1)}</td>
-      <td class="${ch<0?'trend-dn':ch>0.05?'trend-up':''}">${ch>0?'+':''}${ch.toFixed(2)}</td>
-      <td>${Math.round(s.avgCal).toLocaleString()}</td>
-      <td>${Math.round(s.avgStp).toLocaleString()}</td>
-      <td>${s.avgSlp.toFixed(1)}</td>
-      <td>${s.avgEgy.toFixed(1)}</td>
-      <td style="${s.avgStr>6.5?'color:#991b1b;font-weight:700':''}">${s.avgStr.toFixed(1)}</td>
-      <td>${s.daysLogged}/${s.total}</td>
+      <td class="tc" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2)" title="${gl}">${gl.length>28?gl.slice(0,28)+'…':gl}</td>
+      <td>${w?.tCal?.toLocaleString()||'—'}</td>
+      <td>${w?.rCal?.toLocaleString()||'—'}</td>
+      <td>${w?.cardio||0}m${w?.z?' · '+w.z:''}</td>
+      <td>${s?s.avgWt.toFixed(1):'—'}</td>
+      <td class="${ch!==null?(ch<0?'trend-dn':ch>0.05?'trend-up':''):''}">${ch!==null?(ch>0?'+':'')+ch.toFixed(2):'—'}</td>
+      <td>${s?Math.round(s.avgCal).toLocaleString():'—'}</td>
+      <td>${s?Math.round(s.avgStp).toLocaleString():'—'}</td>
+      <td>${s?s.daysLogged+'/'+s.total:'0/0'}</td>
+      <td><button class="edit-btn" onclick="openWeekEdit(${wk})"><i class="ti ti-pencil" style="font-size:11px"></i>Edit</button></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="11" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No weekly data yet.</td></tr>';
+  }).join('') || '<tr><td colspan="13" class="tc" style="text-align:center;padding:20px;color:var(--t3)">No weeks yet. Add your first week in Log week.</td></tr>';
 }
 
 function htab(t) {
@@ -1529,6 +1561,47 @@ function applyTheme() {
    EDIT / DELETE
 ============================== */
 let EDIT_ID = null;
+let EDIT_WK = null;
+
+function openWeekEdit(wk) {
+  const w = WEEKS.find(x => x.wk === wk);
+  if (!w) return;
+  EDIT_WK = wk;
+  document.getElementById('we-num').textContent = wk;
+  document.getElementById('we-wk').value = wk;
+  buildPhaseOptions('we-ph');
+  document.getElementById('we-ph').value = w.ph || 'Deficit';
+  document.getElementById('we-gl').value = w.gl || '';
+  document.getElementById('we-tc').value = w.tCal || '';
+  document.getElementById('we-rc').value = w.rCal || '';
+  document.getElementById('we-cd').value = w.cardio || '';
+  document.getElementById('we-cz').value = w.z || 'Zone 2';
+  document.getElementById('week-edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeWeekEdit() {
+  document.getElementById('week-edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  EDIT_WK = null;
+}
+
+function saveWeekEdit() {
+  if (EDIT_WK === null) return;
+  const w = WEEKS.find(x => x.wk === EDIT_WK);
+  if (!w) return;
+  const newWk = parseInt(document.getElementById('we-wk').value) || EDIT_WK;
+  w.wk = newWk;
+  w.ph = document.getElementById('we-ph').value;
+  w.gl = document.getElementById('we-gl').value;
+  w.tCal = parseInt(document.getElementById('we-tc').value) || w.tCal || 0;
+  w.rCal = parseInt(document.getElementById('we-rc').value) || w.rCal || 0;
+  w.cardio = parseInt(document.getElementById('we-cd').value) || 0;
+  w.z = document.getElementById('we-cz').value;
+  WEEKS.sort((a,b) => a.wk - b.wk);
+  save(); closeWeekEdit(); renderHistory(); renderCharts();
+  toast('Week updated ✓');
+}
 
 function openEdit(id) {
   const e = DAILY.find(d => d.id === id);
