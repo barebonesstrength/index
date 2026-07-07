@@ -589,19 +589,31 @@ td.tc{font-family:var(--fb)}
           <label class="field-label" style="margin-bottom:6px">Before</label>
           <select id="cmp-l" class="field-input" onchange="renderCompare()" style="margin-bottom:10px;font-size:12px"></select>
           <div style="position:relative;padding-bottom:130%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
-            <img id="cmp-img-l" src="" alt="Before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in" onclick="zoomPhoto(this.src)">
+            <img id="cmp-img-l" src="" alt="Before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;transform-origin:center;transition:transform .15s">
             <div id="cmp-empty-l" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo selected</div>
           </div>
-          <div style="font-size:12px;color:var(--t2);margin-top:7px;text-align:center;font-family:var(--fh)" id="cmp-lbl-l">—</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px">
+            <button onclick="zoomImg('cmp-img-l',-0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom out">−</button>
+            <span id="cmp-zoom-l" style="font-size:11px;font-family:var(--fm);min-width:26px;text-align:center;color:var(--t2)">1×</span>
+            <button onclick="zoomImg('cmp-img-l',0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom in">+</button>
+            <button onclick="resetImgZoom('cmp-img-l','cmp-zoom-l')" class="rb" style="padding:3px 9px;font-size:12px" title="Reset">↺</button>
+          </div>
+          <div style="font-size:12px;color:var(--t2);margin-top:5px;text-align:center;font-family:var(--fh)" id="cmp-lbl-l">—</div>
         </div>
         <div>
           <label class="field-label" style="margin-bottom:6px">After</label>
           <select id="cmp-r" class="field-input" onchange="renderCompare()" style="margin-bottom:10px;font-size:12px"></select>
           <div style="position:relative;padding-bottom:130%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
-            <img id="cmp-img-r" src="" alt="After" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;cursor:zoom-in" onclick="zoomPhoto(this.src)">
+            <img id="cmp-img-r" src="" alt="After" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;transform-origin:center;transition:transform .15s">
             <div id="cmp-empty-r" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo selected</div>
           </div>
-          <div style="font-size:12px;color:var(--t2);margin-top:7px;text-align:center;font-family:var(--fh)" id="cmp-lbl-r">—</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px">
+            <button onclick="zoomImg('cmp-img-r',-0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom out">−</button>
+            <span id="cmp-zoom-r" style="font-size:11px;font-family:var(--fm);min-width:26px;text-align:center;color:var(--t2)">1×</span>
+            <button onclick="zoomImg('cmp-img-r',0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom in">+</button>
+            <button onclick="resetImgZoom('cmp-img-r','cmp-zoom-r')" class="rb" style="padding:3px 9px;font-size:12px" title="Reset">↺</button>
+          </div>
+          <div style="font-size:12px;color:var(--t2);margin-top:5px;text-align:center;font-family:var(--fh)" id="cmp-lbl-r">—</div>
         </div>
       </div>
     </div>
@@ -755,6 +767,34 @@ td.tc{font-family:var(--fb)}
   </div>
 </div>
 
+<!-- Photo Edit Modal -->
+<div id="photo-edit-modal" class="modal-overlay" onclick="if(event.target===this)closePhotoEdit()">
+  <div class="modal-card">
+    <div class="modal-hd">
+      <h2 class="modal-title">Edit photo</h2>
+      <button class="modal-close" onclick="closePhotoEdit()" aria-label="Close">×</button>
+    </div>
+    <div class="fr2">
+      <div class="field"><label class="field-label">Date</label><input type="date" class="field-input" id="pe-dt"></div>
+      <div class="field"><label class="field-label">Week #</label><input type="number" class="field-input" id="pe-wk" min="1"></div>
+    </div>
+    <div class="field"><label class="field-label">Phase</label><select class="field-input" id="pe-ph"></select></div>
+    <div class="field"><label class="field-label">Notes</label><input type="text" class="field-input" id="pe-nt" placeholder="Optional note..."></div>
+    <hr class="divider">
+    <div class="section-title">Replace photo</div>
+    <p style="font-size:12px;color:var(--t2);margin-bottom:10px">Upload a new image to replace this photo. Tags and week stay the same unless you change them above.</p>
+    <label class="btn-secondary" style="cursor:pointer;display:inline-flex">
+      <i class="ti ti-camera-plus"></i>Choose new photo
+      <input type="file" accept="image/*" onchange="replacePhotoFile(event)" style="display:none" id="pe-file">
+    </label>
+    <div id="pe-replace-ok" style="font-size:12px;color:var(--ok-b);margin-top:6px;display:none"><i class="ti ti-check"></i> New photo ready — save to confirm.</div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-primary" onclick="savePhotoEdit()">Save changes</button>
+      <button class="btn-danger" onclick="deletePhotoFromEdit()"><i class="ti ti-trash"></i>Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -767,6 +807,8 @@ let DAILY = [];
 let PHOTOS = [];
 let GOAL = { name: '', targetWt: null, targetRate: null, startedWk: null };
 let CFG = { startDate: null, zoom: null, offset: 0, fromWk: null, toWk: null };
+let CMP_ZOOM = {};
+let EDIT_PHOTO_ID = null;
 let WT_VIEW = 'weekly'; // 'weekly' or 'daily'
 let CH = {};
 
@@ -876,6 +918,7 @@ function buildPhaseOptions(selectId) {
 function updatePhaseSelects() {
   buildPhaseOptions('w-ph');
   buildPhaseOptions('ph-ph');
+  buildPhaseOptions('pe-ph');
 }
 
 function renderPhasesList() {
@@ -1562,7 +1605,10 @@ function renderPhotos() {
             <div style="padding:10px 12px">
               <div style="display:flex;align-items:center;justify-content:space-between">
                 <div style="font-size:13px;font-weight:600;font-family:var(--fh);color:var(--t1)">W${p.wk} · ${fmtDate(p.date)}</div>
-                <button onclick="deletePhoto(${p.id})" style="color:var(--t3);cursor:pointer;padding:3px 5px;border-radius:4px" title="Delete photo"><i class="ti ti-trash" style="font-size:13px"></i></button>
+                <div style="display:flex;gap:2px">
+                  <button onclick="openPhotoEdit(${p.id})" style="color:var(--t2);cursor:pointer;padding:3px 5px;border-radius:4px" title="Edit tags or replace photo"><i class="ti ti-pencil" style="font-size:13px"></i></button>
+                  <button onclick="deletePhoto(${p.id})" style="color:var(--t3);cursor:pointer;padding:3px 5px;border-radius:4px" title="Delete photo"><i class="ti ti-trash" style="font-size:13px"></i></button>
+                </div>
               </div>
               ${p.note ? `<div style="font-size:11px;color:var(--t2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.note}</div>` : ''}
             </div>
@@ -1629,8 +1675,113 @@ function checkStorage() {
 }
 
 /* ==============================
-   GOALS & PROJECTION
+   PHOTO EDIT
 ============================== */
+function openPhotoEdit(id) {
+  const p = PHOTOS.find(x => x.id === id); if (!p) return;
+  EDIT_PHOTO_ID = id;
+  document.getElementById('pe-dt').value = /^\d{4}-\d{2}-\d{2}$/.test(p.date||'') ? p.date : '';
+  document.getElementById('pe-wk').value = p.wk || '';
+  buildPhaseOptions('pe-ph');
+  document.getElementById('pe-ph').value = p.ph || 'Deficit';
+  document.getElementById('pe-nt').value = p.note || '';
+  document.getElementById('pe-replace-ok').style.display = 'none';
+  document.getElementById('pe-file').value = '';
+  document.getElementById('photo-edit-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePhotoEdit() {
+  document.getElementById('photo-edit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  EDIT_PHOTO_ID = null;
+}
+
+function savePhotoEdit() {
+  if (!EDIT_PHOTO_ID) return;
+  const p = PHOTOS.find(x => x.id === EDIT_PHOTO_ID); if (!p) return;
+  p.date = document.getElementById('pe-dt').value || p.date;
+  p.wk = parseInt(document.getElementById('pe-wk').value) || p.wk;
+  p.ph = document.getElementById('pe-ph').value;
+  p.note = document.getElementById('pe-nt').value;
+  save(); closePhotoEdit(); renderPhotos();
+  toast('Photo updated ✓');
+}
+
+function deletePhotoFromEdit() {
+  if (!EDIT_PHOTO_ID) return;
+  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  PHOTOS = PHOTOS.filter(p => p.id !== EDIT_PHOTO_ID);
+  save(); closePhotoEdit(); renderPhotos();
+  toast('Photo deleted.');
+}
+
+function replacePhotoFile(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) { toast('Please select an image file.'); return; }
+  compressImage(file, 700, 0.72, data => {
+    if (!EDIT_PHOTO_ID) return;
+    const p = PHOTOS.find(x => x.id === EDIT_PHOTO_ID); if (!p) return;
+    p.data = data;
+    document.getElementById('pe-replace-ok').style.display = 'block';
+  });
+}
+
+/* ==============================
+   COMPARISON ZOOM & PAN
+============================== */
+function zoomImg(imgId, delta) {
+  const z = CMP_ZOOM[imgId] = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
+  z.scale = Math.max(1, Math.min(5, +(z.scale + delta).toFixed(1)));
+  if (z.scale === 1) { z.x = 0; z.y = 0; }
+  applyImgZoom(imgId);
+}
+
+function resetImgZoom(imgId, labelId) {
+  CMP_ZOOM[imgId] = { scale:1, x:0, y:0 };
+  applyImgZoom(imgId);
+  if (labelId) { const el = document.getElementById(labelId); if (el) el.textContent = '1×'; }
+}
+
+function applyImgZoom(imgId) {
+  const z = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
+  const el = document.getElementById(imgId); if (!el) return;
+  el.style.transform = `translate(${z.x}px,${z.y}px) scale(${z.scale})`;
+  el.style.cursor = z.scale > 1 ? 'grab' : 'default';
+  // Update zoom label — derive label ID from img ID
+  const lblId = imgId.replace('img-','zoom-');
+  const lbl = document.getElementById(lblId);
+  if (lbl) lbl.textContent = (z.scale % 1 === 0 ? z.scale : z.scale.toFixed(1)) + '×';
+}
+
+function initImgDrag(imgId) {
+  const el = document.getElementById(imgId); if (!el) return;
+  let drag = false, sx = 0, sy = 0;
+  const getZ = () => CMP_ZOOM[imgId] = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
+
+  const onStart = (cx, cy) => {
+    if (getZ().scale <= 1) return;
+    drag = true; sx = cx - getZ().x; sy = cy - getZ().y;
+    el.style.cursor = 'grabbing'; el.style.transition = 'none';
+  };
+  const onMove = (cx, cy) => {
+    if (!drag) return;
+    getZ().x = cx - sx; getZ().y = cy - sy;
+    applyImgZoom(imgId);
+  };
+  const onEnd = () => {
+    if (!drag) return; drag = false;
+    el.style.transition = 'transform .15s';
+    el.style.cursor = getZ().scale > 1 ? 'grab' : 'default';
+  };
+
+  el.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); e.preventDefault(); });
+  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', onEnd);
+  el.addEventListener('touchstart', e => { if (e.touches.length===1) onStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  window.addEventListener('touchmove', e => { if (drag && e.touches.length===1) onMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  window.addEventListener('touchend', onEnd);
+}
 function getTwoWeekRate() {
   const sorted = DAILY.filter(d=>d.wt).sort((a,b)=>a.wk-b.wk||a.id-b.id);
   if (sorted.length < 4) return null;
@@ -1886,6 +2037,7 @@ renderLegend();
 updatePhaseSelects();
 renderPhasesList();
 renderPhotos();
+['cmp-img-l','cmp-img-r','dash-img-l','dash-img-r'].forEach(initImgDrag);
 if (WEEKS.length || DAILY.length) {
   renderCharts();
 } else {
