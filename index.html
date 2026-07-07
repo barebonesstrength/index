@@ -269,6 +269,7 @@ td.tc{font-family:var(--fb)}
   <button class="nav-tab" data-v="week" onclick="sv('week')">Log week</button>
   <button class="nav-tab" data-v="history" onclick="sv('history')">History</button>
   <button class="nav-tab" data-v="photos" onclick="sv('photos')">Photos</button>
+  <button class="nav-tab" data-v="goals" onclick="sv('goals')">Goals</button>
   <button class="nav-tab" data-v="settings" onclick="sv('settings')">Settings</button>
 </nav>
 
@@ -433,7 +434,7 @@ td.tc{font-family:var(--fb)}
   <div class="card">
     <div class="card-body" style="max-width:540px">
       <div class="fr2">
-        <div class="field"><label class="field-label">Date / label</label><input class="field-input" type="text" id="f-dt" placeholder="e.g. 17 Mar"></div>
+        <div class="field"><label class="field-label">Date</label><input class="field-input" type="date" id="f-dt"></div>
         <div class="field"><label class="field-label">Day type</label><select class="field-input" id="f-tp"><option value="T">Training day</option><option value="R">Rest day</option></select></div>
       </div>
       <div class="fr2">
@@ -564,7 +565,7 @@ td.tc{font-family:var(--fb)}
       <div class="s-title" style="margin-bottom:4px">Add photo</div>
       <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5">Photos are stored in your browser. Export your data regularly to back them up.</div>
       <div class="fr2">
-        <div class="field"><label class="field-label">Date / label</label><input class="field-input" type="text" id="ph-dt" placeholder="e.g. 17 Mar"></div>
+        <div class="field"><label class="field-label">Date</label><input class="field-input" type="date" id="ph-dt"></div>
         <div class="field"><label class="field-label">Week #</label><input class="field-input" type="number" id="ph-wk" placeholder="1" min="1"></div>
       </div>
       <div class="fr2">
@@ -610,6 +611,82 @@ td.tc{font-family:var(--fb)}
   <div id="storage-warn" style="display:none;margin-top:16px;padding:11px 14px;background:var(--warn-bg);border-left:3px solid var(--warn-b);border-radius:0 var(--r-md) var(--r-md) 0;font-size:13px;color:var(--t1)"></div>
 </div>
 
+<!-- ===== GOALS & PROJECTION ===== -->
+<div id="view-goals" class="view">
+  <h1 class="page-title">Goals &amp; Projection</h1>
+  <p class="page-sub">Set your phase target, monitor your 2-week rate of progress, and get a specific calorie adjustment if you need to correct course.</p>
+
+  <div class="card mb-16">
+    <div class="card-body" style="max-width:540px">
+      <div class="s-title" style="margin-bottom:4px">Phase goal</div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5">Set your goal weight and the weekly rate you're aiming for. The projection below updates automatically from your last two weeks of logged data.</div>
+      <div class="fr2">
+        <div class="field"><label class="field-label">Goal name</label><input class="field-input" type="text" id="gl-name" placeholder="e.g. Summer cut"></div>
+        <div class="field"><label class="field-label">Goal weight (kg)</label><input class="field-input" type="number" step="0.1" id="gl-wt" placeholder="80.0"></div>
+      </div>
+      <div class="fr2">
+        <div class="field">
+          <label class="field-label">Target weekly rate (kg/week)</label>
+          <input class="field-input" type="number" step="0.05" id="gl-rate" placeholder="-0.5">
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">Negative = fat loss &nbsp;·&nbsp; Positive = muscle gain</div>
+        </div>
+        <div class="field"><label class="field-label">Phase started (week #)</label><input class="field-input" type="number" id="gl-stw" placeholder="1"></div>
+      </div>
+      <button class="btn-primary" onclick="saveGoal()">Save goal</button>
+      <div id="gl-ok" class="success-msg"><i class="ti ti-check"></i> Goal saved.</div>
+    </div>
+  </div>
+
+  <div id="goal-nodata" style="display:none" class="card mb-16">
+    <div class="card-body" style="text-align:center;padding:36px 20px">
+      <div style="font-size:13px;font-weight:600;font-family:var(--fh);color:var(--t2);margin-bottom:6px">Not enough data yet</div>
+      <div style="font-size:13px;color:var(--t3);line-height:1.6">Log at least 4 daily weight entries across two weeks to enable the 2-week rate calculation and projection.</div>
+    </div>
+  </div>
+
+  <div id="goal-progress" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div class="metric-card">
+        <div class="metric-label">Target rate</div>
+        <div class="metric-value" id="gp-target">—</div>
+        <div class="metric-sub">per week</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Actual (2-week avg)</div>
+        <div class="metric-value" id="gp-actual">—</div>
+        <div class="metric-sub">last 2 weeks</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Status</div>
+        <div style="font-size:16px;font-weight:700;font-family:var(--fh);margin-top:6px;margin-bottom:3px" id="gp-status">—</div>
+        <div class="metric-sub" id="gp-status-sub">—</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="metric-card">
+        <div class="metric-label">Weeks to goal</div>
+        <div class="metric-value" id="gp-wks">—</div>
+        <div class="metric-sub" id="gp-wks-sub">at current pace</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Projected date</div>
+        <div class="metric-value" id="gp-date" style="font-size:16px;margin-top:4px">—</div>
+        <div class="metric-sub" id="gp-date-sub">—</div>
+      </div>
+    </div>
+
+    <div class="card mb-16">
+      <div class="card-body">
+        <div class="s-title" style="margin-bottom:4px">Calorie adjustment suggestion</div>
+        <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.5">Based on your 2-week rate vs target. Only relevant if adherence and tracking have been consistent — run through the CALM diagnostic first if you're unsure.</div>
+        <div id="gp-suggest" style="border-radius:0 var(--r-md) var(--r-md) 0;padding:12px 16px;font-size:13px;line-height:1.65;border-left:3px solid transparent">—</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:10px;line-height:1.6">Calculation: 1 kg ≈ 7,700 kcal. Rate gap × 7,700 ÷ 7 = daily kcal adjustment. Steps estimate: ~50 kcal per 1,000 steps.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <!-- Edit Day Modal -->
@@ -620,7 +697,7 @@ td.tc{font-family:var(--fb)}
       <button class="modal-close" onclick="closeEdit()" aria-label="Close">×</button>
     </div>
     <div class="fr2">
-      <div class="field"><label class="field-label">Date / label</label><input class="field-input" type="text" id="e-dt" placeholder="e.g. 17 Mar"></div>
+      <div class="field"><label class="field-label">Date</label><input class="field-input" type="date" id="e-dt"></div>
       <div class="field"><label class="field-label">Day type</label><select class="field-input" id="e-tp"><option value="T">Training day</option><option value="R">Rest day</option></select></div>
     </div>
     <div class="fr2">
@@ -688,6 +765,7 @@ td.tc{font-family:var(--fb)}
 let WEEKS = [];
 let DAILY = [];
 let PHOTOS = [];
+let GOAL = { name: '', targetWt: null, targetRate: null, startedWk: null };
 let CFG = { startDate: null, zoom: null, offset: 0, fromWk: null, toWk: null };
 let WT_VIEW = 'weekly'; // 'weekly' or 'daily'
 let CH = {};
@@ -739,6 +817,7 @@ function save() {
     localStorage.setItem('bb_c', JSON.stringify(CFG));
     localStorage.setItem('bb_p', JSON.stringify(CUSTOM_PHASES));
     localStorage.setItem('bb_photos', JSON.stringify(PHOTOS));
+    localStorage.setItem('bb_goal', JSON.stringify(GOAL));
   } catch(e) { throw e; }
 }
 
@@ -754,6 +833,8 @@ function load() {
     if (p) CUSTOM_PHASES = JSON.parse(p);
     const ph = localStorage.getItem('bb_photos');
     if (ph) PHOTOS = JSON.parse(ph);
+    const gl = localStorage.getItem('bb_goal');
+    if (gl) Object.assign(GOAL, JSON.parse(gl));
     if (CFG.startDate) {
       document.getElementById('start-date').value = CFG.startDate;
       document.getElementById('cfg-date').value = CFG.startDate;
@@ -765,6 +846,16 @@ function load() {
    HELPERS
 ============================== */
 const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+// Format stored dates (ISO YYYY-MM-DD or legacy free text) for display
+function fmtDate(str) {
+  if (!str) return '—';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const d = new Date(str + 'T00:00:00');
+    return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'short' });
+  }
+  return str; // legacy free-text dates pass through unchanged
+}
 
 function allPhases() { return [...DEFAULT_PHASES, ...CUSTOM_PHASES]; }
 
@@ -889,6 +980,7 @@ function sv(id) {
   document.getElementById('view-' + id).classList.add('active');
   if (id === 'history') renderHistory();
   if (id === 'photos') renderPhotos();
+  if (id === 'goals') renderGoals();
   if (id === 'log') {
     const mx = DAILY.length ? Math.max(...DAILY.map(d=>d.wk)) : 1;
     document.getElementById('log-wkn').textContent = mx;
@@ -1140,7 +1232,7 @@ function renderCharts() {
   if (WT_VIEW === 'daily' && vd.length) {
     CH.w = new Chart(document.getElementById('ch-wt'), {
       type:'line',
-      data:{ labels:vd.map(d=>d.dt), datasets:[{
+      data:{ labels:vd.map(d=>fmtDate(d.dt)), datasets:[{
         label:'Weight (kg)', data:vd.map(d=>d.wt||null),
         borderColor:'#0a4834', borderWidth:2,
         pointBackgroundColor:vd.map(d=>phaseColor(WEEKS.find(w=>w.wk===d.wk)?.ph||'Deficit')),
@@ -1165,7 +1257,7 @@ function renderCharts() {
 
   CH.dc = new Chart(document.getElementById('ch-dc'), {
     type:'bar',
-    data:{ labels:vd.map(d=>d.dt), datasets:[
+    data:{ labels:vd.map(d=>fmtDate(d.dt)), datasets:[
       {type:'bar',label:'Calories',data:vd.map(d=>d.kcal),backgroundColor:vd.map(d=>d.type==='T'?'#b5863a99':'#9ca3af66'),borderColor:vd.map(d=>d.type==='T'?'#b5863a':'#9ca3af'),borderWidth:1.5,borderRadius:3},
       {type:'line',label:'Target',data:vd.map(d=>{const w=WEEKS.find(x=>x.wk===d.wk);return w?(d.type==='T'?w.tCal:w.rCal):null;}),borderColor:'#991b1b',borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false,tension:0},
     ]},
@@ -1174,7 +1266,7 @@ function renderCharts() {
 
   CH.bf = new Chart(document.getElementById('ch-bf'), {
     type:'line',
-    data:{ labels:vd.map(d=>d.dt), datasets:[
+    data:{ labels:vd.map(d=>fmtDate(d.dt)), datasets:[
       {label:'Energy',data:vd.map(d=>d.egy||null),borderColor:'#059669',borderWidth:2,pointRadius:3,tension:.4,fill:false,spanGaps:true},
       {label:'Hunger',data:vd.map(d=>d.hun||null),borderColor:'#b5863a',borderWidth:2,pointRadius:3,tension:.4,fill:false,spanGaps:true},
       {label:'Stress',data:vd.map(d=>d.str||null),borderColor:'#991b1b',borderWidth:2,pointRadius:3,tension:.4,fill:false,spanGaps:true},
@@ -1203,7 +1295,7 @@ function renderHistory() {
   const sortedDaily = DAILY.slice().sort((a,b) => a.wk - b.wk || a.id - b.id);
   document.getElementById('hd-body').innerHTML = sortedDaily.map(d => {
     return `<tr>
-      <td class="tc">${d.dt}</td><td>${d.wk}</td>
+      <td class="tc">${fmtDate(d.dt)}</td><td>${d.wk}</td>
       <td class="tc"><span class="type-pill" style="background:${d.type==='T'?'#b5863a22':'#9ca3af22'};color:${d.type==='T'?'#b5863a':'#6b7280'}">${d.type==='T'?'Training':'Rest'}</span></td>
       <td>${d.wt||'—'}</td><td>${d.kcal||'—'}</td><td>${d.pro||'—'}</td><td>${d.cb||'—'}</td><td>${d.fat||'—'}</td>
       <td>${d.slp||'—'}</td><td>${(d.stp||0).toLocaleString()}</td>
@@ -1264,7 +1356,7 @@ function addDay() {
   }
   DAILY.push({
     id: DAILY.length ? Math.max(...DAILY.map(d=>d.id))+1 : 1,
-    dt: document.getElementById('f-dt').value || new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short'}),
+    dt: document.getElementById('f-dt').value || new Date().toISOString().slice(0,10),
     wk: wkn, type: document.getElementById('f-tp').value,
     wt: wt||null, kcal: kc,
     pro: parseInt(document.getElementById('f-pr').value)||0,
@@ -1356,11 +1448,11 @@ function loadSample() {
 
 function clearAll() {
   if (!confirm('This will permanently delete all your data. Export first if you want a backup. Continue?')) return;
-  WEEKS=[]; DAILY=[];
+  WEEKS=[]; DAILY=[]; PHOTOS=[]; GOAL={ name:'', targetWt:null, targetRate:null, startedWk:null };
   CFG={ startDate:null, zoom:null, offset:0, fromWk:null, toWk:null };
   Object.values(CH).forEach(c=>{try{c.destroy();}catch(e){}});
   CH={};
-  ['bb_w','bb_d','bb_c','bb_p','bb_photos'].forEach(k=>localStorage.removeItem(k));
+  ['bb_w','bb_d','bb_c','bb_p','bb_photos','bb_goal'].forEach(k=>localStorage.removeItem(k));
   showEmpty();
   toast('All data cleared.');
 }
@@ -1393,7 +1485,7 @@ function compressImage(file, maxDim, quality, cb) {
 }
 
 function photoLabel(p) {
-  return `W${p.wk} · ${p.date} — ${p.ph}`;
+  return `W${p.wk} · ${fmtDate(p.date)} — ${p.ph}`;
 }
 
 function getDefaultCompareIds() {
@@ -1469,7 +1561,7 @@ function renderPhotos() {
             </div>
             <div style="padding:10px 12px">
               <div style="display:flex;align-items:center;justify-content:space-between">
-                <div style="font-size:13px;font-weight:600;font-family:var(--fh);color:var(--t1)">W${p.wk} · ${p.date}</div>
+                <div style="font-size:13px;font-weight:600;font-family:var(--fh);color:var(--t1)">W${p.wk} · ${fmtDate(p.date)}</div>
                 <button onclick="deletePhoto(${p.id})" style="color:var(--t3);cursor:pointer;padding:3px 5px;border-radius:4px" title="Delete photo"><i class="ti ti-trash" style="font-size:13px"></i></button>
               </div>
               ${p.note ? `<div style="font-size:11px;color:var(--t2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.note}</div>` : ''}
@@ -1486,7 +1578,7 @@ function uploadPhoto(e) {
     const wkn = parseInt(document.getElementById('ph-wk').value) || (WEEKS.length ? WEEKS[WEEKS.length-1].wk : 1);
     PHOTOS.push({
       id: Date.now(),
-      date: document.getElementById('ph-dt').value || new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short'}),
+      date: document.getElementById('ph-dt').value || new Date().toISOString().slice(0,10),
       wk: wkn,
       ph: document.getElementById('ph-ph').value || 'Deficit',
       note: document.getElementById('ph-note').value,
@@ -1537,8 +1629,125 @@ function checkStorage() {
 }
 
 /* ==============================
-   THEME
+   GOALS & PROJECTION
 ============================== */
+function getTwoWeekRate() {
+  const sorted = DAILY.filter(d=>d.wt).sort((a,b)=>a.wk-b.wk||a.id-b.id);
+  if (sorted.length < 4) return null;
+  const last14 = sorted.slice(-Math.min(14, sorted.length));
+  if (last14.length < 4) return null;
+  const mid = Math.floor(last14.length / 2);
+  const w1 = last14.slice(0, mid);
+  const w2 = last14.slice(mid);
+  const avg1 = w1.reduce((s,d)=>s+d.wt,0)/w1.length;
+  const avg2 = w2.reduce((s,d)=>s+d.wt,0)/w2.length;
+  return avg2 - avg1; // kg/week equivalent
+}
+
+function saveGoal() {
+  GOAL.name = document.getElementById('gl-name').value.trim();
+  GOAL.targetWt = parseFloat(document.getElementById('gl-wt').value) || null;
+  GOAL.targetRate = parseFloat(document.getElementById('gl-rate').value);
+  GOAL.startedWk = parseInt(document.getElementById('gl-stw').value) || null;
+  if (isNaN(GOAL.targetRate)) GOAL.targetRate = null;
+  save(); renderGoals();
+  const ok = document.getElementById('gl-ok'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',2500);
+  toast('Goal saved ✓');
+}
+
+function renderGoals() {
+  // Populate form
+  if (GOAL.name) document.getElementById('gl-name').value = GOAL.name;
+  if (GOAL.targetWt) document.getElementById('gl-wt').value = GOAL.targetWt;
+  if (GOAL.targetRate !== null) document.getElementById('gl-rate').value = GOAL.targetRate;
+  if (GOAL.startedWk) document.getElementById('gl-stw').value = GOAL.startedWk;
+
+  const actualRate = getTwoWeekRate();
+  const hasData = actualRate !== null;
+  const hasGoal = GOAL.targetRate !== null && GOAL.targetWt !== null;
+
+  document.getElementById('goal-progress').style.display = (hasData && hasGoal) ? 'block' : 'none';
+  document.getElementById('goal-nodata').style.display = (hasGoal && !hasData) ? 'block' : 'none';
+
+  if (!hasData || !hasGoal) return;
+
+  const targetRate = GOAL.targetRate;
+  const goalWt = GOAL.targetWt;
+  const sortedWt = DAILY.filter(d=>d.wt).sort((a,b)=>a.wk-b.wk||a.id-b.id);
+  const curWt = sortedWt.slice(-1)[0]?.wt || 0;
+  const isLoss = targetRate < 0;
+
+  // Status
+  const diff = actualRate - targetRate;
+  const absDiff = Math.abs(diff);
+  let status, statusSub, statusColor;
+
+  if (Math.abs(actualRate) < 0.05) {
+    status='Stalled'; statusColor='#991b1b';
+    statusSub='Rate is flat — run CALM diagnostic before acting';
+  } else if (absDiff <= 0.1) {
+    status='On track'; statusColor='#2d6a4f';
+    statusSub='Within 0.1 kg/wk of target rate';
+  } else if ((isLoss && actualRate < targetRate) || (!isLoss && actualRate > targetRate)) {
+    status='Ahead'; statusColor='#2d6a4f';
+    statusSub=isLoss?'Losing faster than planned':'Gaining faster than planned';
+  } else {
+    status='Behind'; statusColor='#b5863a';
+    statusSub=isLoss?'Losing slower than planned':'Gaining slower than planned';
+  }
+
+  document.getElementById('gp-target').textContent = (targetRate>0?'+':'')+targetRate.toFixed(2)+' kg';
+  const arEl = document.getElementById('gp-actual');
+  arEl.textContent = (actualRate>0?'+':'')+actualRate.toFixed(2)+' kg';
+  arEl.style.color = status==='Behind'?'#b5863a':status==='Stalled'?'#991b1b':'#2d6a4f';
+  const stEl = document.getElementById('gp-status');
+  stEl.textContent=status; stEl.style.color=statusColor;
+  document.getElementById('gp-status-sub').textContent=statusSub;
+
+  // Projection
+  const movingRight = Math.sign(actualRate)===Math.sign(targetRate) && actualRate!==0;
+  const wksRemaining = movingRight ? (goalWt-curWt)/actualRate : null;
+  if (wksRemaining !== null && wksRemaining > 0 && wksRemaining < 200) {
+    document.getElementById('gp-wks').textContent = wksRemaining.toFixed(1);
+    document.getElementById('gp-wks-sub').textContent = 'at '+(actualRate>0?'+':'')+actualRate.toFixed(2)+' kg/wk';
+    const pd = new Date(); pd.setDate(pd.getDate()+Math.round(wksRemaining*7));
+    document.getElementById('gp-date').textContent = pd.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+    document.getElementById('gp-date-sub').textContent = Math.round(wksRemaining)+' weeks from today';
+  } else {
+    const msg = !movingRight ? 'Rate going wrong direction' : wksRemaining<=0 ? 'Goal reached' : '—';
+    document.getElementById('gp-wks').textContent = '—';
+    document.getElementById('gp-date').textContent = msg;
+    document.getElementById('gp-date-sub').textContent = '';
+  }
+
+  // Calorie suggestion
+  const gap = targetRate - actualRate;
+  const dailyKcal = Math.abs(Math.round(gap*7700/7));
+  const stepsEquiv = Math.round(dailyKcal/50)*1000;
+  const el = document.getElementById('gp-suggest');
+  let txt, bg, bc;
+
+  if (status==='On track') {
+    txt='No adjustment needed. Your 2-week rate is within 0.1 kg/week of target. Stay the course and re-check in two weeks.';
+    bg='var(--ok-bg)'; bc='var(--ok-b)';
+  } else if (status==='Stalled') {
+    txt='Rate is too flat to make a reliable calorie recommendation. Check your CALM diagnostic first — a stall is almost always an execution issue before it\'s a calorie issue.';
+    bg='var(--warn-bg)'; bc='var(--warn-b)';
+  } else if (status==='Ahead' && isLoss) {
+    txt=`You\'re losing ~${Math.abs(actualRate-targetRate).toFixed(2)} kg/week faster than planned. If energy, training, and hunger are all good, leave it. If performance is dropping or you\'re feeling flat, consider adding ~${dailyKcal} kcal/day to bring the rate back to target and protect muscle.`;
+    bg='var(--info-bg)'; bc='var(--info-b)';
+  } else if (status==='Behind' && isLoss) {
+    txt=`To close the ${Math.abs(gap).toFixed(2)} kg/week gap and reach your target rate, reduce daily calories by approximately ${dailyKcal} kcal. Alternatively, adding ~${stepsEquiv.toLocaleString()} steps/day achieves a similar effect. One change only — hold it for 10 days before re-evaluating.`;
+    bg='var(--warn-bg)'; bc='var(--warn-b)';
+  } else if (status==='Ahead' && !isLoss) {
+    txt=`You\'re gaining ~${Math.abs(actualRate-targetRate).toFixed(2)} kg/week faster than planned. To slow to your target rate, reduce daily calories by approximately ${dailyKcal} kcal.`;
+    bg='var(--warn-bg)'; bc='var(--warn-b)';
+  } else {
+    txt=`To close the ${Math.abs(gap).toFixed(2)} kg/week gap, increase daily calories by approximately ${dailyKcal} kcal. One change, held consistently for 10 days, then re-evaluate with fresh data.`;
+    bg='var(--info-bg)'; bc='var(--info-b)';
+  }
+  el.textContent=txt; el.style.background=bg; el.style.borderLeftColor=bc;
+}
 function isDark() { return document.documentElement.dataset.theme === 'dark'; }
 
 function toggleTheme() {
@@ -1607,7 +1816,8 @@ function openEdit(id) {
   const e = DAILY.find(d => d.id === id);
   if (!e) return;
   EDIT_ID = id;
-  document.getElementById('e-dt').value = e.dt || '';
+  // Only set date input if value is already in ISO format; otherwise leave blank
+  document.getElementById('e-dt').value = /^\d{4}-\d{2}-\d{2}$/.test(e.dt||'') ? e.dt : '';
   document.getElementById('e-tp').value = e.type || 'T';
   document.getElementById('e-wt').value = e.wt || '';
   document.getElementById('e-kc').value = e.kcal || '';
