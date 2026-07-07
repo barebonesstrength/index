@@ -341,6 +341,15 @@ td.tc{font-family:var(--fb)}
               <img id="dash-img-l" src="" alt="Before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none">
               <div id="dash-empty-l" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo</div>
             </div>
+            <div style="margin-top:6px;padding:0 2px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:10px;color:var(--t3);font-family:var(--fh)">Zoom</span><span id="dash-zoom-l" style="font-family:var(--fm);font-size:10px;color:var(--t2)">1×</span></div>
+              <input type="range" min="1" max="5" step="0.1" value="1" id="dash-zr-l" style="width:100%;accent-color:var(--green)" oninput="setImgZoom('dash-img-l',this.value)">
+              <div style="display:flex;justify-content:space-between;margin:4px 0 2px"><span style="font-size:10px;color:var(--t3);font-family:var(--fh)">X</span><span id="dash-xv-l" style="font-family:var(--fm);font-size:10px;color:var(--t2)">0</span></div>
+              <input type="range" min="-300" max="300" step="1" value="0" id="dash-xr-l" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('dash-img-l','x',this.value)">
+              <div style="display:flex;justify-content:space-between;margin:4px 0 2px"><span style="font-size:10px;color:var(--t3);font-family:var(--fh)">Y</span><span id="dash-yv-l" style="font-family:var(--fm);font-size:10px;color:var(--t2)">0</span></div>
+              <input type="range" min="-300" max="300" step="1" value="0" id="dash-yr-l" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('dash-img-l','y',this.value)">
+              <button onclick="resetImgZoom('dash-img-l')" class="rb" style="width:100%;font-size:10px;padding:3px;margin-top:5px">Reset</button>
+            </div>
             <div style="font-size:11px;color:var(--t3);margin-top:5px;text-align:center;font-family:var(--fh)" id="dash-lbl-l">—</div>
           </div>
           <div>
@@ -348,6 +357,15 @@ td.tc{font-family:var(--fb)}
             <div style="position:relative;padding-bottom:115%;border-radius:var(--r-md);overflow:hidden;background:var(--tint);border:1px solid var(--border-s)">
               <img id="dash-img-r" src="" alt="After" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none">
               <div id="dash-empty-r" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo</div>
+            </div>
+            <div style="margin-top:6px;padding:0 2px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="font-size:10px;color:var(--t3);font-family:var(--fh)">Zoom</span><span id="dash-zoom-r" style="font-family:var(--fm);font-size:10px;color:var(--t2)">1×</span></div>
+              <input type="range" min="1" max="5" step="0.1" value="1" id="dash-zr-r" style="width:100%;accent-color:var(--green)" oninput="setImgZoom('dash-img-r',this.value)">
+              <div style="display:flex;justify-content:space-between;margin:4px 0 2px"><span style="font-size:10px;color:var(--t3);font-family:var(--fh)">X</span><span id="dash-xv-r" style="font-family:var(--fm);font-size:10px;color:var(--t2)">0</span></div>
+              <input type="range" min="-300" max="300" step="1" value="0" id="dash-xr-r" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('dash-img-r','x',this.value)">
+              <div style="display:flex;justify-content:space-between;margin:4px 0 2px"><span style="font-size:10px;color:var(--t3);font-family:var(--fh)">Y</span><span id="dash-yv-r" style="font-family:var(--fm);font-size:10px;color:var(--t2)">0</span></div>
+              <input type="range" min="-300" max="300" step="1" value="0" id="dash-yr-r" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('dash-img-r','y',this.value)">
+              <button onclick="resetImgZoom('dash-img-r')" class="rb" style="width:100%;font-size:10px;padding:3px;margin-top:5px">Reset</button>
             </div>
             <div style="font-size:11px;color:var(--t3);margin-top:5px;text-align:center;font-family:var(--fh)" id="dash-lbl-r">—</div>
           </div>
@@ -592,11 +610,14 @@ td.tc{font-family:var(--fb)}
             <img id="cmp-img-l" src="" alt="Before" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;transform-origin:center;transition:transform .15s">
             <div id="cmp-empty-l" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo selected</div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px">
-            <button onclick="zoomImg('cmp-img-l',-0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom out">−</button>
-            <span id="cmp-zoom-l" style="font-size:11px;font-family:var(--fm);min-width:26px;text-align:center;color:var(--t2)">1×</span>
-            <button onclick="zoomImg('cmp-img-l',0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom in">+</button>
-            <button onclick="resetImgZoom('cmp-img-l','cmp-zoom-l')" class="rb" style="padding:3px 9px;font-size:12px" title="Reset">↺</button>
+          <div style="margin-top:8px;padding:0 2px">
+            <div class="slider-hd" style="margin-bottom:3px"><span class="slider-lbl" style="font-size:11px">Zoom</span><span id="cmp-zoom-l" class="slider-val" style="font-size:11px">1×</span></div>
+            <input type="range" min="1" max="5" step="0.1" value="1" id="cmp-zr-l" style="width:100%;accent-color:var(--green)" oninput="setImgZoom('cmp-img-l',this.value)">
+            <div class="slider-hd" style="margin:5px 0 3px"><span class="slider-lbl" style="font-size:11px">Position X</span><span id="cmp-xv-l" class="slider-val" style="font-size:11px">0</span></div>
+            <input type="range" min="-300" max="300" step="1" value="0" id="cmp-xr-l" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('cmp-img-l','x',this.value)">
+            <div class="slider-hd" style="margin:5px 0 3px"><span class="slider-lbl" style="font-size:11px">Position Y</span><span id="cmp-yv-l" class="slider-val" style="font-size:11px">0</span></div>
+            <input type="range" min="-300" max="300" step="1" value="0" id="cmp-yr-l" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('cmp-img-l','y',this.value)">
+            <button onclick="resetImgZoom('cmp-img-l')" class="rb" style="width:100%;font-size:11px;padding:4px;margin-top:6px">Reset</button>
           </div>
           <div style="font-size:12px;color:var(--t2);margin-top:5px;text-align:center;font-family:var(--fh)" id="cmp-lbl-l">—</div>
         </div>
@@ -607,11 +628,14 @@ td.tc{font-family:var(--fb)}
             <img id="cmp-img-r" src="" alt="After" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;transform-origin:center;transition:transform .15s">
             <div id="cmp-empty-r" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:12px;font-family:var(--fh)">No photo selected</div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px">
-            <button onclick="zoomImg('cmp-img-r',-0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom out">−</button>
-            <span id="cmp-zoom-r" style="font-size:11px;font-family:var(--fm);min-width:26px;text-align:center;color:var(--t2)">1×</span>
-            <button onclick="zoomImg('cmp-img-r',0.5)" class="rb" style="padding:3px 10px;font-size:15px;line-height:1" title="Zoom in">+</button>
-            <button onclick="resetImgZoom('cmp-img-r','cmp-zoom-r')" class="rb" style="padding:3px 9px;font-size:12px" title="Reset">↺</button>
+          <div style="margin-top:8px;padding:0 2px">
+            <div class="slider-hd" style="margin-bottom:3px"><span class="slider-lbl" style="font-size:11px">Zoom</span><span id="cmp-zoom-r" class="slider-val" style="font-size:11px">1×</span></div>
+            <input type="range" min="1" max="5" step="0.1" value="1" id="cmp-zr-r" style="width:100%;accent-color:var(--green)" oninput="setImgZoom('cmp-img-r',this.value)">
+            <div class="slider-hd" style="margin:5px 0 3px"><span class="slider-lbl" style="font-size:11px">Position X</span><span id="cmp-xv-r" class="slider-val" style="font-size:11px">0</span></div>
+            <input type="range" min="-300" max="300" step="1" value="0" id="cmp-xr-r" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('cmp-img-r','x',this.value)">
+            <div class="slider-hd" style="margin:5px 0 3px"><span class="slider-lbl" style="font-size:11px">Position Y</span><span id="cmp-yv-r" class="slider-val" style="font-size:11px">0</span></div>
+            <input type="range" min="-300" max="300" step="1" value="0" id="cmp-yr-r" disabled style="width:100%;accent-color:var(--green);opacity:.35" oninput="setImgPan('cmp-img-r','y',this.value)">
+            <button onclick="resetImgZoom('cmp-img-r')" class="rb" style="width:100%;font-size:11px;padding:4px;margin-top:6px">Reset</button>
           </div>
           <div style="font-size:12px;color:var(--t2);margin-top:5px;text-align:center;font-family:var(--fh)" id="cmp-lbl-r">—</div>
         </div>
@@ -1730,17 +1754,32 @@ function replacePhotoFile(e) {
 /* ==============================
    COMPARISON ZOOM & PAN
 ============================== */
-function zoomImg(imgId, delta) {
+const IMG_CONTROLS = {
+  'cmp-img-l':  { zr:'cmp-zr-l',  xr:'cmp-xr-l',  yr:'cmp-yr-l',  zv:'cmp-zoom-l',  xv:'cmp-xv-l',  yv:'cmp-yv-l'  },
+  'cmp-img-r':  { zr:'cmp-zr-r',  xr:'cmp-xr-r',  yr:'cmp-yr-r',  zv:'cmp-zoom-r',  xv:'cmp-xv-r',  yv:'cmp-yv-r'  },
+  'dash-img-l': { zr:'dash-zr-l', xr:'dash-xr-l', yr:'dash-yr-l', zv:'dash-zoom-l', xv:'dash-xv-l', yv:'dash-yv-l' },
+  'dash-img-r': { zr:'dash-zr-r', xr:'dash-xr-r', yr:'dash-yr-r', zv:'dash-zoom-r', xv:'dash-xv-r', yv:'dash-yv-r' },
+};
+
+function setImgZoom(imgId, val) {
   const z = CMP_ZOOM[imgId] = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
-  z.scale = Math.max(1, Math.min(5, +(z.scale + delta).toFixed(1)));
-  if (z.scale === 1) { z.x = 0; z.y = 0; }
+  z.scale = parseFloat(val);
+  if (z.scale <= 1) { z.scale = 1; z.x = 0; z.y = 0; }
   applyImgZoom(imgId);
+  syncImgControls(imgId);
 }
 
-function resetImgZoom(imgId, labelId) {
+function setImgPan(imgId, axis, val) {
+  const z = CMP_ZOOM[imgId] = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
+  z[axis] = parseInt(val);
+  applyImgZoom(imgId);
+  syncImgControls(imgId);
+}
+
+function resetImgZoom(imgId) {
   CMP_ZOOM[imgId] = { scale:1, x:0, y:0 };
   applyImgZoom(imgId);
-  if (labelId) { const el = document.getElementById(labelId); if (el) el.textContent = '1×'; }
+  syncImgControls(imgId);
 }
 
 function applyImgZoom(imgId) {
@@ -1748,39 +1787,34 @@ function applyImgZoom(imgId) {
   const el = document.getElementById(imgId); if (!el) return;
   el.style.transform = `translate(${z.x}px,${z.y}px) scale(${z.scale})`;
   el.style.cursor = z.scale > 1 ? 'grab' : 'default';
-  // Update zoom label — derive label ID from img ID
-  const lblId = imgId.replace('img-','zoom-');
-  const lbl = document.getElementById(lblId);
-  if (lbl) lbl.textContent = (z.scale % 1 === 0 ? z.scale : z.scale.toFixed(1)) + '×';
+}
+
+function syncImgControls(imgId) {
+  const z = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
+  const c = IMG_CONTROLS[imgId]; if (!c) return;
+  const g = id => document.getElementById(id);
+  const locked = z.scale <= 1;
+  if (g(c.zr)) g(c.zr).value = z.scale;
+  if (g(c.xr)) { g(c.xr).value = z.x; g(c.xr).disabled = locked; g(c.xr).style.opacity = locked ? '.35' : '1'; }
+  if (g(c.yr)) { g(c.yr).value = z.y; g(c.yr).disabled = locked; g(c.yr).style.opacity = locked ? '.35' : '1'; }
+  if (g(c.zv)) g(c.zv).textContent = (Number.isInteger(z.scale) ? z.scale : z.scale.toFixed(1)) + '×';
+  if (g(c.xv)) g(c.xv).textContent = z.x;
+  if (g(c.yv)) g(c.yv).textContent = z.y;
 }
 
 function initImgDrag(imgId) {
   const el = document.getElementById(imgId); if (!el) return;
   let drag = false, sx = 0, sy = 0;
-  const getZ = () => CMP_ZOOM[imgId] = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
-
-  const onStart = (cx, cy) => {
-    if (getZ().scale <= 1) return;
-    drag = true; sx = cx - getZ().x; sy = cy - getZ().y;
-    el.style.cursor = 'grabbing'; el.style.transition = 'none';
-  };
-  const onMove = (cx, cy) => {
-    if (!drag) return;
-    getZ().x = cx - sx; getZ().y = cy - sy;
-    applyImgZoom(imgId);
-  };
-  const onEnd = () => {
-    if (!drag) return; drag = false;
-    el.style.transition = 'transform .15s';
-    el.style.cursor = getZ().scale > 1 ? 'grab' : 'default';
-  };
-
-  el.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); e.preventDefault(); });
-  window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
-  window.addEventListener('mouseup', onEnd);
-  el.addEventListener('touchstart', e => { if (e.touches.length===1) onStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
-  window.addEventListener('touchmove', e => { if (drag && e.touches.length===1) onMove(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
-  window.addEventListener('touchend', onEnd);
+  const z = () => CMP_ZOOM[imgId] = CMP_ZOOM[imgId] || { scale:1, x:0, y:0 };
+  const start = (cx,cy) => { if (z().scale<=1) return; drag=true; sx=cx-z().x; sy=cy-z().y; el.style.cursor='grabbing'; el.style.transition='none'; };
+  const move  = (cx,cy) => { if (!drag) return; z().x=cx-sx; z().y=cy-sy; applyImgZoom(imgId); syncImgControls(imgId); };
+  const end   = ()      => { if (!drag) return; drag=false; el.style.transition='transform .15s'; el.style.cursor=z().scale>1?'grab':'default'; };
+  el.addEventListener('mousedown',  e=>{start(e.clientX,e.clientY);e.preventDefault()});
+  window.addEventListener('mousemove',  e=>move(e.clientX,e.clientY));
+  window.addEventListener('mouseup',    end);
+  el.addEventListener('touchstart', e=>{if(e.touches.length===1)start(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  window.addEventListener('touchmove', e=>{if(drag&&e.touches.length===1)move(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  window.addEventListener('touchend', end);
 }
 function getTwoWeekRate() {
   const sorted = DAILY.filter(d=>d.wt).sort((a,b)=>a.wk-b.wk||a.id-b.id);
