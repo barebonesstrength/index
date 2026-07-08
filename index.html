@@ -1555,13 +1555,20 @@ function photoLabel(p) {
   return `W${p.wk} · ${fmtDate(p.date)} — ${p.ph}`;
 }
 
+function photoSortKey(p) {
+  // ISO dates (YYYY-MM-DD) sort correctly as strings
+  if (/^\d{4}-\d{2}-\d{2}$/.test(p.date||'')) return p.date;
+  // Legacy free-text dates: fall back to week number then upload order
+  return String(p.wk||0).padStart(5,'0') + '-' + String(p.id);
+}
+
 function getDefaultCompareIds() {
-  if (PHOTOS.length < 2) return [null, null];
-  const curPh = WEEKS.length ? WEEKS[WEEKS.length-1].ph : null;
-  let left = curPh ? PHOTOS.find(p => p.ph === curPh) : null;
-  if (!left) left = PHOTOS[0];
-  const right = [...PHOTOS].reverse().find(p => p.id !== left.id) || PHOTOS[PHOTOS.length-1];
-  return [left.id, right.id];
+  if (!PHOTOS.length) return [null, null];
+  const sorted = PHOTOS.slice().sort((a,b) => photoSortKey(a).localeCompare(photoSortKey(b)));
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  // If only one photo, left = that photo, right = empty
+  return [first.id, sorted.length > 1 ? last.id : null];
 }
 
 function populatePhotoSelects(...ids) {
