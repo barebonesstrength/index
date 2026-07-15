@@ -1,3 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barebones — Training & Nutrition Navigator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+/* === DESIGN TOKENS === */
+:root {
+  --green:#0a4834; --green-h:#0d5c42;
+  --cream:#ebe1cf; --off-white:#f0edee; --near-black:#010b13;
+  --bg:#f0edee; --surface:#fff; --tint:#f8f5f1;
+  --t1:#010b13; --t2:#4a5568; --t3:#8a9099;
+  --border:#ddd8d0; --border-s:#eae5df;
+  --r-sm:6px; --r-md:10px; --r-lg:16px; --r-xl:24px;
+  --sh-xs:0 1px 2px rgba(1,11,19,.05); --sh-sm:0 2px 6px rgba(1,11,19,.07); --sh-md:0 4px 16px rgba(1,11,19,.09);
+  --fh:'Inter',sans-serif; --fb:'Montserrat',sans-serif; --fm:'SF Mono','Fira Code',monospace;
+  --deficit:#b5863a; --recovery:#7c3aed; --surplus:#059669; --maintenance:#6b7280;
+  --ok-bg:#f0fdf8; --ok-b:#2d6a4f;
+  --warn-bg:#fffcf0; --warn-b:#b5863a;
+  --info-bg:#eef2ff; --info-b:#3730a3;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-font-smoothing:antialiased}
+body{font-family:var(--fb);background:var(--bg);color:var(--t1);min-height:100vh;line-height:1.5}
+h1,h2,h3,h4,h5,h6{font-family:var(--fh);font-weight:700;line-height:1.2}
+input,select,textarea,button{font-family:var(--fb);font-size:14px}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--green)}
+
+/* === DARK MODE === */
+[data-theme="dark"] {
   --bg: #0a4834;
   --surface: #ebe1cf;
   --tint: #f5efe0;
@@ -986,7 +1022,8 @@ function visWks() {
 function visDaily() {
   const vn = visWks().map(w => w.wk);
   const f = DAILY.filter(d => vn.includes(d.wk));
-  return f.length ? f : DAILY.slice(-14);
+  const data = f.length ? f : DAILY.slice();
+  return data.sort((a,b) => dailySortKey(a).localeCompare(dailySortKey(b)));
 }
 
 function showEmpty() {
@@ -1027,7 +1064,7 @@ function updateMetrics() {
   WEEKS.forEach(w => { const s = wkStats(w.wk); if (s && s.avgWt > 0) w.avgWt = +s.avgWt.toFixed(2); });
 
   // Sort by week then log ID so first/latest reflect actual date order, not entry order
-  const dailyWithWt = DAILY.filter(d => d.wt).sort((a,b) => a.wk - b.wk || a.id - b.id);
+  const dailyWithWt = DAILY.filter(d => d.wt).sort((a,b) => dailySortKey(a).localeCompare(dailySortKey(b)));
   const firstD = dailyWithWt[0];
   const latD = dailyWithWt.slice(-1)[0];
 
@@ -1323,7 +1360,7 @@ function renderCharts() {
    HISTORY
 ============================== */
 function renderHistory() {
-  const sortedDaily = DAILY.slice().sort((a,b) => a.wk - b.wk || a.id - b.id);
+  const sortedDaily = DAILY.slice().sort((a,b) => dailySortKey(a).localeCompare(dailySortKey(b)));
   document.getElementById('hd-body').innerHTML = sortedDaily.map(d => {
     return `<tr>
       <td class="tc">${fmtDate(d.dt)}</td><td>${d.wk}</td>
@@ -1524,6 +1561,16 @@ function photoSortKey(p) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(p.date||'')) return p.date;
   // Legacy free-text dates: fall back to week number then upload order
   return String(p.wk||0).padStart(5,'0') + '-' + String(p.id);
+}
+
+// Sort daily entries chronologically: week number first,
+// then ISO date within the week, then insertion order as tiebreaker.
+// Legacy free-text dates fall to the end of their week (stable order via id).
+function dailySortKey(d) {
+  const wk = String(d.wk || 0).padStart(5, '0');
+  const dt = /^\d{4}-\d{2}-\d{2}$/.test(d.dt || '') ? d.dt : '9999-99-99';
+  const id = String(d.id || 0).padStart(15, '0');
+  return `${wk}-${dt}-${id}`;
 }
 
 function getDefaultCompareIds() {
@@ -1788,7 +1835,7 @@ function initImgDrag(imgId) {
   window.addEventListener('touchend', end);
 }
 function getTwoWeekRate() {
-  const sorted = DAILY.filter(d=>d.wt).sort((a,b)=>a.wk-b.wk||a.id-b.id);
+  const sorted = DAILY.filter(d=>d.wt).sort((a,b)=>dailySortKey(a).localeCompare(dailySortKey(b)));
   if (sorted.length < 4) return null;
   const last14 = sorted.slice(-Math.min(14, sorted.length));
   if (last14.length < 4) return null;
@@ -1829,7 +1876,7 @@ function renderGoals() {
 
   const targetRate = GOAL.targetRate;
   const goalWt = GOAL.targetWt;
-  const sortedWt = DAILY.filter(d=>d.wt).sort((a,b)=>a.wk-b.wk||a.id-b.id);
+  const sortedWt = DAILY.filter(d=>d.wt).sort((a,b)=>dailySortKey(a).localeCompare(dailySortKey(b)));
   const curWt = sortedWt.slice(-1)[0]?.wt || 0;
   const isLoss = targetRate < 0;
 
