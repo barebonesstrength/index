@@ -402,6 +402,7 @@ td.tc{font-family:var(--fb)}
           <button class="rb" onclick="clearDailyRange()" style="font-size:11px;padding:3px 10px">Clear</button>
           <span id="daily-cnt" style="font-size:11px;color:var(--t3);margin-left:auto;font-family:var(--fh)"></span>
         </div>
+        <div id="daily-excl-note" style="display:none;font-size:11px;color:var(--t3);font-family:var(--fh);padding:4px 2px">Some entries were logged with free-text dates and can't be date-filtered — re-enter their dates via Edit to include them.</div>
         <div style="position:relative;height:200px"><canvas id="ch-wt" role="img" aria-label="Weekly body weight trend">Weekly body weight trend</canvas></div>
         <div style="margin-top:12px">
           <div class="strip-label">Full timeline — click any week to zoom in</div>
@@ -866,20 +867,20 @@ const SAMPLE_W = [
 ];
 
 const SAMPLE_D = [
-  {id:1,dt:'Mar 3',wk:11,type:'T',wt:90.8,kcal:2355,pro:201,cb:270,fat:46,fib:35,slp:7.5,stp:10200,egy:7,hun:6,str:5,nt:''},
-  {id:2,dt:'Mar 4',wk:11,type:'T',wt:90.5,kcal:2370,pro:199,cb:272,fat:47,fib:36,slp:7.0,stp:9800,egy:6,hun:6,str:6,nt:''},
-  {id:3,dt:'Mar 5',wk:11,type:'R',wt:90.3,kcal:1920,pro:218,cb:134,fat:56,fib:34,slp:8.0,stp:8200,egy:7,hun:7,str:4,nt:''},
-  {id:4,dt:'Mar 6',wk:11,type:'T',wt:90.1,kcal:2360,pro:200,cb:268,fat:45,fib:35,slp:7.5,stp:10500,egy:8,hun:5,str:4,nt:''},
-  {id:5,dt:'Mar 7',wk:11,type:'T',wt:90.6,kcal:2345,pro:201,cb:267,fat:46,fib:35,slp:6.5,stp:9500,egy:6,hun:7,str:7,nt:'Tired'},
-  {id:6,dt:'Mar 8',wk:11,type:'T',wt:90.4,kcal:2375,pro:200,cb:272,fat:46,fib:36,slp:8.5,stp:11000,egy:8,hun:5,str:3,nt:''},
-  {id:7,dt:'Mar 9',wk:11,type:'R',wt:90.6,kcal:1930,pro:220,cb:137,fat:55,fib:34,slp:7.0,stp:7500,egy:7,hun:7,str:5,nt:''},
-  {id:8,dt:'Mar 10',wk:12,type:'T',wt:90.9,kcal:2330,pro:199,cb:278,fat:47,fib:35,slp:7.0,stp:9600,egy:6,hun:7,str:6,nt:'Hungry today'},
-  {id:9,dt:'Mar 11',wk:12,type:'T',wt:91.0,kcal:2345,pro:200,cb:280,fat:46,fib:35,slp:7.5,stp:10000,egy:6,hun:6,str:5,nt:''},
-  {id:10,dt:'Mar 12',wk:12,type:'R',wt:90.8,kcal:1980,pro:206,cb:158,fat:58,fib:34,slp:8.0,stp:8800,egy:7,hun:7,str:4,nt:''},
-  {id:11,dt:'Mar 13',wk:12,type:'T',wt:90.5,kcal:2340,pro:200,cb:278,fat:46,fib:35,slp:7.5,stp:10200,egy:7,hun:6,str:5,nt:''},
-  {id:12,dt:'Mar 14',wk:12,type:'T',wt:91.2,kcal:2370,pro:201,cb:282,fat:44,fib:34,slp:6.0,stp:9200,egy:5,hun:8,str:8,nt:'Work stress'},
-  {id:13,dt:'Mar 15',wk:12,type:'T',wt:90.6,kcal:2360,pro:200,cb:279,fat:46,fib:36,slp:9.0,stp:10800,egy:8,hun:5,str:3,nt:''},
-  {id:14,dt:'Mar 16',wk:12,type:'R',wt:90.7,kcal:1960,pro:212,cb:150,fat:57,fib:34,slp:7.5,stp:7200,egy:7,hun:6,str:4,nt:''},
+  {id:1,dt:'2025-03-03',wk:11,type:'T',wt:90.8,kcal:2355,pro:201,cb:270,fat:46,fib:35,slp:7.5,stp:10200,egy:7,hun:6,str:5,nt:''},
+  {id:2,dt:'2025-03-04',wk:11,type:'T',wt:90.5,kcal:2370,pro:199,cb:272,fat:47,fib:36,slp:7.0,stp:9800,egy:6,hun:6,str:6,nt:''},
+  {id:3,dt:'2025-03-05',wk:11,type:'R',wt:90.3,kcal:1920,pro:218,cb:134,fat:56,fib:34,slp:8.0,stp:8200,egy:7,hun:7,str:4,nt:''},
+  {id:4,dt:'2025-03-06',wk:11,type:'T',wt:90.1,kcal:2360,pro:200,cb:268,fat:45,fib:35,slp:7.5,stp:10500,egy:8,hun:5,str:4,nt:''},
+  {id:5,dt:'2025-03-07',wk:11,type:'T',wt:90.6,kcal:2345,pro:201,cb:267,fat:46,fib:35,slp:6.5,stp:9500,egy:6,hun:7,str:7,nt:'Tired'},
+  {id:6,dt:'2025-03-08',wk:11,type:'T',wt:90.4,kcal:2375,pro:200,cb:272,fat:46,fib:36,slp:8.5,stp:11000,egy:8,hun:5,str:3,nt:''},
+  {id:7,dt:'2025-03-09',wk:11,type:'R',wt:90.6,kcal:1930,pro:220,cb:137,fat:55,fib:34,slp:7.0,stp:7500,egy:7,hun:7,str:5,nt:''},
+  {id:8,dt:'2025-03-10',wk:12,type:'T',wt:90.9,kcal:2330,pro:199,cb:278,fat:47,fib:35,slp:7.0,stp:9600,egy:6,hun:7,str:6,nt:'Hungry today'},
+  {id:9,dt:'2025-03-11',wk:12,type:'T',wt:91.0,kcal:2345,pro:200,cb:280,fat:46,fib:35,slp:7.5,stp:10000,egy:6,hun:6,str:5,nt:''},
+  {id:10,dt:'2025-03-12',wk:12,type:'R',wt:90.8,kcal:1980,pro:206,cb:158,fat:58,fib:34,slp:8.0,stp:8800,egy:7,hun:7,str:4,nt:''},
+  {id:11,dt:'2025-03-13',wk:12,type:'T',wt:90.5,kcal:2340,pro:200,cb:278,fat:46,fib:35,slp:7.5,stp:10200,egy:7,hun:6,str:5,nt:''},
+  {id:12,dt:'2025-03-14',wk:12,type:'T',wt:91.2,kcal:2370,pro:201,cb:282,fat:44,fib:34,slp:6.0,stp:9200,egy:5,hun:8,str:8,nt:'Work stress'},
+  {id:13,dt:'2025-03-15',wk:12,type:'T',wt:90.6,kcal:2360,pro:200,cb:279,fat:46,fib:36,slp:9.0,stp:10800,egy:8,hun:5,str:3,nt:''},
+  {id:14,dt:'2025-03-16',wk:12,type:'R',wt:90.7,kcal:1960,pro:212,cb:150,fat:57,fib:34,slp:7.5,stp:7200,egy:7,hun:6,str:4,nt:''},
 ];
 
 /* ==============================
@@ -1031,18 +1032,24 @@ function visWks() {
 function visDaily() {
   const { from, to } = DAILY_DATE_RANGE;
   if (from || to) {
-    // Date range filter overrides week-based zoom for daily charts
-    return DAILY.filter(d => {
-      const isISO = /^\d{4}-\d{2}-\d{2}$/.test(d.dt || '');
-      if (!isISO) return true; // can't filter legacy text dates — include them
+    const filtered = DAILY.filter(d => {
+      // Only ISO-dated entries can be reliably filtered — exclude legacy text dates
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d.dt || '')) return false;
       if (from && d.dt < from) return false;
       if (to && d.dt > to) return false;
       return true;
     }).sort((a,b) => dailySortKey(a).localeCompare(dailySortKey(b)));
+    // Show how many legacy entries were excluded (can't filter them by date)
+    const excluded = DAILY.filter(d => !/^\d{4}-\d{2}-\d{2}$/.test(d.dt || '')).length;
+    const noteEl = document.getElementById('daily-excl-note');
+    if (noteEl) noteEl.style.display = excluded > 0 ? 'block' : 'none';
+    return filtered;
   }
   const vn = visWks().map(w => w.wk);
   const f = DAILY.filter(d => vn.includes(d.wk));
   const data = f.length ? f : DAILY.slice();
+  const noteEl = document.getElementById('daily-excl-note');
+  if (noteEl) noteEl.style.display = 'none';
   return data.sort((a,b) => dailySortKey(a).localeCompare(dailySortKey(b)));
 }
 
